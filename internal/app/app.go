@@ -17,7 +17,8 @@ import (
 	"github.com/jerryluo/nettui/internal/util"
 )
 
-type tickMsg time.Time
+type refreshMsg struct{}
+type clearMsgMsg struct{}
 
 // Model is the root application model.
 type Model struct {
@@ -33,15 +34,14 @@ type Model struct {
 	height   int
 	showHelp bool
 	dnsOn    bool
-	message  string // ephemeral status message
-	msgTimer int    // ticks remaining for message display
+	message string // ephemeral status message
 
 	warnings map[model.TabID]bool // tabs with partial data
 }
 
 // New creates a new root Model with the given tabs.
 func New(tabModels []tabs.Tab, collector *sources.Collector) Model {
-	return Model{
+	m := Model{
 		tabs:      tabModels,
 		activeTab: model.TabInterfaces,
 		keys:      DefaultKeyMap(),
@@ -50,19 +50,13 @@ func New(tabModels []tabs.Tab, collector *sources.Collector) Model {
 		panel:     ui.NewSidePanel(),
 		warnings:  make(map[model.TabID]bool),
 	}
+	m.panel.Show()
+	return m
 }
 
 // Init implements tea.Model.
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(
-		tick(),
-	)
-}
-
-func tick() tea.Cmd {
-	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
+	return func() tea.Msg { return refreshMsg{} }
 }
 
 // Update implements tea.Model.
@@ -74,7 +68,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.recalcLayout()
 		return m, nil
 
-	case tickMsg:
+	case refreshMsg:
 		result := m.collector.Collect()
 		m.store.Update(result)
 		snap := m.store.Snapshot()
@@ -98,15 +92,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.panel.SetContent(content)
 		}
 
-		// Decrement message timer
-		if m.msgTimer > 0 {
-			m.msgTimer--
-			if m.msgTimer == 0 {
-				m.message = ""
-			}
-		}
+		return m, nil
 
-		return m, tick()
+	case clearMsgMsg:
+		m.message = ""
+		return m, nil
 
 	case model.CopyResultMsg:
 		if msg.Success {
@@ -114,14 +104,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.message = "Copy failed: " + msg.Error
 		}
-		m.msgTimer = 3
-		return m, nil
+		return m, tea.Tick(3*time.Second, func(time.Time) tea.Msg { return clearMsgMsg{} })
 
 	case model.CrossRefMsg:
 		m.activeTab = msg.TargetTab
 		m.tabs[m.activeTab].NavigateTo(msg.FilterKey, msg.FilterVal)
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 
 	case tea.KeyMsg:
@@ -158,45 +146,37 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case key.Matches(msg, m.keys.NextTab):
 		m.activeTab = model.TabID((int(m.activeTab) + 1) % model.TabCount)
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 
 	case key.Matches(msg, m.keys.PrevTab):
 		m.activeTab = model.TabID((int(m.activeTab) - 1 + model.TabCount) % model.TabCount)
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 
 	case key.Matches(msg, m.keys.Tab1):
 		m.activeTab = model.TabInterfaces
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 	case key.Matches(msg, m.keys.Tab2):
 		m.activeTab = model.TabRoutes
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 	case key.Matches(msg, m.keys.Tab3):
 		m.activeTab = model.TabSockets
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 	case key.Matches(msg, m.keys.Tab4):
 		m.activeTab = model.TabUnixSockets
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 	case key.Matches(msg, m.keys.Tab5):
 		m.activeTab = model.TabProcesses
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 	case key.Matches(msg, m.keys.Tab6):
 		m.activeTab = model.TabFirewall
-		m.panel.Hide()
-		m.recalcLayout()
+		m.updatePanelContent()
 		return m, nil
 
 	case key.Matches(msg, m.keys.Enter):
@@ -240,6 +220,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return model.CopyResultMsg{Success: true}
 		}
 
+	case key.Matches(msg, m.keys.Refresh):
+		return m, func() tea.Msg { return refreshMsg{} }
+
 	case key.Matches(msg, m.keys.DNS):
 		m.dnsOn = !m.dnsOn
 		// Propagate DNS state to the sockets tab.
@@ -253,6 +236,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		updated, cmd := m.tabs[m.activeTab].Update(synth)
 		m.tabs[m.activeTab] = updated.(tabs.Tab)
+		if m.panel.Visible() {
+			m.panel.SetContent(m.tabs[m.activeTab].DetailContent())
+		}
 		return m, cmd
 
 	case key.Matches(msg, m.keys.PageUp):
@@ -260,6 +246,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		updated, cmd := m.tabs[m.activeTab].Update(synth)
 		m.tabs[m.activeTab] = updated.(tabs.Tab)
+		if m.panel.Visible() {
+			m.panel.SetContent(m.tabs[m.activeTab].DetailContent())
+		}
 		return m, cmd
 
 	case key.Matches(msg, m.keys.Filter):
@@ -274,7 +263,20 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	updated, cmd := m.tabs[m.activeTab].Update(msg)
 	m.tabs[m.activeTab] = updated.(tabs.Tab)
+	// Update panel content to reflect new selection
+	if m.panel.Visible() {
+		content := m.tabs[m.activeTab].DetailContent()
+		m.panel.SetContent(content)
+	}
 	return m, cmd
+}
+
+func (m *Model) updatePanelContent() {
+	if m.panel.Visible() {
+		content := m.tabs[m.activeTab].DetailContent()
+		m.panel.SetContent(content)
+	}
+	m.recalcLayout()
 }
 
 func (m *Model) recalcLayout() {
@@ -347,6 +349,7 @@ func (m Model) helpView() string {
 		{"Esc", "Close panel / clear filter"},
 		{"g", "Go to cross-referenced entity"},
 		{"c", "Copy selection to clipboard"},
+		{"r", "Refresh data"},
 		{"d", "Toggle DNS resolution"},
 		{"?", "Toggle this help"},
 	}

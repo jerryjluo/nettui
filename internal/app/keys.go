@@ -22,6 +22,7 @@ type KeyMap struct {
 	Copy      key.Binding
 	DNS       key.Binding
 	Help      key.Binding
+	Refresh   key.Binding
 	PageUp   key.Binding
 	PageDown key.Binding
 }
@@ -82,6 +83,10 @@ func DefaultKeyMap() KeyMap {
 		Help: key.NewBinding(
 			key.WithKeys("?"),
 			key.WithHelp("?", "help"),
+		),
+		Refresh: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "refresh"),
 		),
 		PageUp: key.NewBinding(
 			key.WithKeys("K"),
