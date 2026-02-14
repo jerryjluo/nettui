@@ -97,7 +97,7 @@ func (m *Model) SetData(store *data.Store) {
 func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-	m.table = m.table.WithPageSize(height - 6).WithMaxTotalWidth(width)
+	m.table = m.table.WithPageSize(height - 6).WithTargetWidth(width)
 }
 
 // TabID implements Tab.

@@ -307,6 +307,7 @@ func (m Model) View() string {
 	tabView := m.tabs[m.activeTab].View()
 
 	if m.layout.PanelOpen {
+		tabView = lipgloss.NewStyle().Width(m.layout.TableWidth).Render(tabView)
 		panelView := m.panel.View()
 		content = lipgloss.JoinHorizontal(lipgloss.Top, tabView, panelView)
 	} else {

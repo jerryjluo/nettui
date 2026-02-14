@@ -5,7 +5,7 @@ import "github.com/evertras/bubble-table/table"
 func columns() []table.Column {
 	return []table.Column{
 		table.NewColumn("name", "Name", 10).WithFiltered(true),
-		table.NewColumn("addrs", "IPs", 22).WithFiltered(true),
+		table.NewFlexColumn("addrs", "IPs", 1).WithFiltered(true),
 		table.NewColumn("mac", "MAC", 19),
 		table.NewColumn("mtu", "MTU", 7),
 		table.NewColumn("status", "Status", 8),

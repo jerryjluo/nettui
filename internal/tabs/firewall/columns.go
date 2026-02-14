@@ -8,8 +8,8 @@ func columns() []table.Column {
 		table.NewColumn("action", "Action", 8).WithFiltered(true),
 		table.NewColumn("dir", "Direction", 11).WithFiltered(true),
 		table.NewColumn("proto", "Proto", 8),
-		table.NewColumn("src", "Src", 22).WithFiltered(true),
-		table.NewColumn("dst", "Dst", 22).WithFiltered(true),
+		table.NewFlexColumn("src", "Src", 1).WithFiltered(true),
+		table.NewFlexColumn("dst", "Dst", 1).WithFiltered(true),
 		table.NewColumn("packets", "Packets", 10),
 		table.NewColumn("bytes", "Bytes", 10),
 	}
