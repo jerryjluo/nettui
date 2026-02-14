@@ -1,0 +1,26 @@
+[tools]
+go = "latest"
+
+[tasks.build]
+description = "Build the nettui binary"
+run = "go build -o nettui ."
+
+[tasks.run]
+description = "Build and run nettui"
+run = "go build -o nettui . && ./nettui"
+
+[tasks.run-root]
+description = "Build and run nettui with sudo"
+run = "go build -o nettui . && sudo ./nettui"
+
+[tasks.tidy]
+description = "Tidy go modules"
+run = "go mod tidy"
+
+[tasks.clean]
+description = "Remove build artifacts"
+run = "rm -f nettui"
+
+[tasks.lint]
+description = "Run go vet"
+run = "go vet ./..."

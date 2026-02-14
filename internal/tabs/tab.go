@@ -1,0 +1,36 @@
+package tabs
+
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/jerryluo/nettui/internal/model"
+	"github.com/jerryluo/nettui/internal/data"
+)
+
+// Tab is the interface that all tab models must implement.
+type Tab interface {
+	tea.Model
+
+	// SetData updates the tab with a new store snapshot.
+	SetData(store *data.Store)
+
+	// SetSize sets the available dimensions for this tab.
+	SetSize(width, height int)
+
+	// TabID returns this tab's identifier.
+	TabID() model.TabID
+
+	// SelectedRow returns a summary string of the currently selected row (for copy).
+	SelectedRow() string
+
+	// DetailContent returns the detail view content for the currently selected row.
+	DetailContent() string
+
+	// CrossRef returns a CrossRefMsg for the currently selected row, or nil.
+	CrossRef() *model.CrossRefMsg
+
+	// NavigateTo applies a cross-reference filter/highlight.
+	NavigateTo(key, val string)
+
+	// IsFiltering returns true if the tab is in filter mode.
+	IsFiltering() bool
+}
