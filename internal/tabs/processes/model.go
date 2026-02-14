@@ -8,6 +8,7 @@ import (
 	"github.com/evertras/bubble-table/table"
 	"github.com/jerryluo/nettui/internal/model"
 	"github.com/jerryluo/nettui/internal/data"
+	"github.com/jerryluo/nettui/internal/tabs"
 	"github.com/jerryluo/nettui/internal/util"
 )
 
@@ -20,6 +21,15 @@ type Model struct {
 	tabID  model.TabID
 	navKey string
 	navVal string
+	sort   tabs.SortState
+}
+
+var sortEntries = []tabs.SortEntry{
+	{Key: "i", ColKey: "pid", SortKey: "raw_pid", Label: "PID"},
+	{Key: "n", ColKey: "name", SortKey: "name", Label: "Name"},
+	{Key: "u", ColKey: "user", SortKey: "user", Label: "User"},
+	{Key: "c", ColKey: "conns", SortKey: "conns", Label: "#Conns"},
+	{Key: "x", ColKey: "unix_socks", SortKey: "unix_socks", Label: "#Unix"},
 }
 
 // New creates a new Processes tab model.
@@ -76,7 +86,9 @@ func (m *Model) View() string {
 func (m *Model) SetData(store *data.Store) {
 	m.store = store
 	rows := m.buildRows()
-	if m.navKey != "" {
+	if m.sort.Active() {
+		m.sort.SortRows(rows)
+	} else if m.navKey != "" {
 		rows = m.reorderRows(rows, m.navKey, m.navVal)
 	}
 	m.table = m.table.WithRows(rows)
@@ -141,6 +153,7 @@ func (m *Model) NavigateTo(key, val string) {
 	if key != "pid" {
 		return
 	}
+	m.sort.Clear()
 	m.navKey = key
 	m.navVal = val
 	rows := m.reorderRows(m.buildRows(), key, val)
@@ -158,6 +171,28 @@ func (m *Model) reorderRows(rows []table.Row, key, val string) []table.Row {
 		}
 	}
 	return append(reordered, rest...)
+}
+
+// SortHint implements Tab.
+func (m *Model) SortHint() string {
+	return tabs.Hint(sortEntries)
+}
+
+// ApplySort implements Tab.
+func (m *Model) ApplySort(key string) {
+	if !m.sort.Apply(sortEntries, key) {
+		return
+	}
+	m.navKey = ""
+	m.navVal = ""
+	rows := m.buildRows()
+	m.sort.SortRows(rows)
+	m.table = m.table.WithRows(rows)
+}
+
+// SortLabel implements Tab.
+func (m *Model) SortLabel() string {
+	return m.sort.Label()
 }
 
 // IsFiltering implements Tab.

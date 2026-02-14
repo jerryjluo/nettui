@@ -9,6 +9,7 @@ import (
 	"github.com/evertras/bubble-table/table"
 	"github.com/jerryluo/nettui/internal/model"
 	"github.com/jerryluo/nettui/internal/data"
+	"github.com/jerryluo/nettui/internal/tabs"
 	"github.com/jerryluo/nettui/internal/util"
 )
 
@@ -21,6 +22,15 @@ type Model struct {
 	tabID  model.TabID
 	navKey string
 	navVal string
+	sort   tabs.SortState
+}
+
+var sortEntries = []tabs.SortEntry{
+	{Key: "n", ColKey: "name", SortKey: "name", Label: "Name"},
+	{Key: "m", ColKey: "mtu", SortKey: "mtu", Label: "MTU"},
+	{Key: "s", ColKey: "status", SortKey: "status", Label: "Status"},
+	{Key: "t", ColKey: "tx_bytes", SortKey: "raw_tx", Label: "TX"},
+	{Key: "r", ColKey: "rx_bytes", SortKey: "raw_rx", Label: "RX"},
 }
 
 // New creates a new Interfaces tab model.
@@ -61,6 +71,8 @@ func (m *Model) buildRows() []table.Row {
 			"tx_pkts": fmt.Sprintf("%d", iface.PacketSent),
 			"rx_pkts": fmt.Sprintf("%d", iface.PacketRecv),
 			"flags":   iface.Flags.String(),
+			"raw_tx":  iface.BytesSent,
+			"raw_rx":  iface.BytesRecv,
 		}))
 	}
 	return rows
@@ -87,7 +99,9 @@ func (m *Model) View() string {
 func (m *Model) SetData(store *data.Store) {
 	m.store = store
 	rows := m.buildRows()
-	if m.navKey != "" {
+	if m.sort.Active() {
+		m.sort.SortRows(rows)
+	} else if m.navKey != "" {
 		rows = m.reorderRows(rows, m.navKey, m.navVal)
 	}
 	m.table = m.table.WithRows(rows)
@@ -135,6 +149,7 @@ func (m *Model) NavigateTo(key, val string) {
 	if key != "name" {
 		return
 	}
+	m.sort.Clear()
 	m.navKey = key
 	m.navVal = val
 	rows := m.reorderRows(m.buildRows(), key, val)
@@ -152,6 +167,28 @@ func (m *Model) reorderRows(rows []table.Row, key, val string) []table.Row {
 		}
 	}
 	return append(reordered, rest...)
+}
+
+// SortHint implements Tab.
+func (m *Model) SortHint() string {
+	return tabs.Hint(sortEntries)
+}
+
+// ApplySort implements Tab.
+func (m *Model) ApplySort(key string) {
+	if !m.sort.Apply(sortEntries, key) {
+		return
+	}
+	m.navKey = ""
+	m.navVal = ""
+	rows := m.buildRows()
+	m.sort.SortRows(rows)
+	m.table = m.table.WithRows(rows)
+}
+
+// SortLabel implements Tab.
+func (m *Model) SortLabel() string {
+	return m.sort.Label()
 }
 
 // IsFiltering implements Tab.

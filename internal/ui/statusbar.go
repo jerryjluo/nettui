@@ -16,6 +16,7 @@ type StatusBarState struct {
 	Message     string
 	ChordHint   string
 	ProtoFilter string
+	SortLabel   string
 }
 
 // RenderStatusBar renders the bottom status bar.
@@ -41,6 +42,10 @@ func RenderStatusBar(state StatusBarState, width int) string {
 
 	if state.Message != "" {
 		left = append(left, lipgloss.NewStyle().Foreground(model.SuccessColor).Render(state.Message))
+	}
+
+	if state.SortLabel != "" {
+		right = append(right, lipgloss.NewStyle().Foreground(model.AccentColor).Bold(true).Render(state.SortLabel))
 	}
 
 	if state.ProtoFilter != "" {

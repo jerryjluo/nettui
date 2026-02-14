@@ -229,6 +229,11 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case key.Matches(msg, m.keys.Sort):
+		m.pendingChord = 's'
+		m.chordHint = m.tabs[m.activeTab].SortHint()
+		return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
+
 	case key.Matches(msg, m.keys.ProtoFilter):
 		// On Sockets tab, enter chord mode for protocol filtering
 		if m.activeTab == model.TabSockets {
@@ -318,6 +323,8 @@ func (m Model) handleChordSecondKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleGotoChord(k)
 	case 'f':
 		return m.handleFilterChord(k)
+	case 's':
+		return m.handleSortChord(k)
 	}
 	return m, nil
 }
@@ -359,6 +366,12 @@ func (m Model) handleFilterChord(k string) (tea.Model, tea.Cmd) {
 	case "c":
 		sockTab.ClearProtoFilters()
 	}
+	return m, nil
+}
+
+func (m Model) handleSortChord(k string) (tea.Model, tea.Cmd) {
+	m.tabs[m.activeTab].ApplySort(k)
+	m.updatePanelContent()
 	return m, nil
 }
 
@@ -417,6 +430,9 @@ func (m Model) View() string {
 		protoFilter = sockTab.ProtoFilterLabel()
 	}
 
+	// Extract sort label from active tab
+	sortLabel := m.tabs[m.activeTab].SortLabel()
+
 	// Status bar
 	statusBar := ui.RenderStatusBar(ui.StatusBarState{
 		IsRoot:      m.store.IsRoot,
@@ -424,6 +440,7 @@ func (m Model) View() string {
 		Message:     m.message,
 		ChordHint:   m.chordHint,
 		ProtoFilter: protoFilter,
+		SortLabel:   sortLabel,
 	}, m.width)
 
 	return lipgloss.JoinVertical(lipgloss.Left, tabBar, content, statusBar)
@@ -451,6 +468,7 @@ func (m Model) helpView() string {
 		{"gn/gu", "Go to Sockets/Unix (Processes tab)"},
 		{"f", "Protocol filter (Sockets tab)"},
 		{"ft/fu/f4/f6/fc", "TCP/UDP/IPv4/IPv6/clear"},
+		{"s", "Sort by column (chord)"},
 		{"c", "Copy selection to clipboard"},
 		{"r", "Refresh data"},
 		{"D", "Toggle DNS resolution"},

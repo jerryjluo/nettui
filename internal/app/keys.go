@@ -26,6 +26,7 @@ type KeyMap struct {
 	PageUp      key.Binding
 	PageDown    key.Binding
 	ProtoFilter key.Binding
+	Sort        key.Binding
 }
 
 // DefaultKeyMap returns the default keybindings.
@@ -100,6 +101,10 @@ func DefaultKeyMap() KeyMap {
 		ProtoFilter: key.NewBinding(
 			key.WithKeys("f"),
 			key.WithHelp("f", "protocol filter"),
+		),
+		Sort: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "sort"),
 		),
 	}
 }

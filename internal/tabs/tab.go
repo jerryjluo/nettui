@@ -33,4 +33,13 @@ type Tab interface {
 
 	// IsFiltering returns true if the tab is in filter mode.
 	IsFiltering() bool
+
+	// SortHint returns the chord hint for sort keys on this tab.
+	SortHint() string
+
+	// ApplySort applies or toggles sort by the given chord key.
+	ApplySort(key string)
+
+	// SortLabel returns the current sort indicator (e.g. "[↑Proto]"), or "".
+	SortLabel() string
 }
