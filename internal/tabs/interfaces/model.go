@@ -150,7 +150,7 @@ func (m *Model) NavigateTo(key, val string) {
 	m.navKey = key
 	m.navVal = val
 	rows := m.reorderRows(m.buildRows(), key, val)
-	m.table = m.table.WithRows(rows)
+	m.table = m.table.WithRows(rows).WithHighlightedRow(0)
 }
 
 func (m *Model) reorderRows(rows []table.Row, key, val string) []table.Row {
