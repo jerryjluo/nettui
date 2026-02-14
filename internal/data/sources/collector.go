@@ -82,8 +82,15 @@ func (c *Collector) Collect() data.CollectionResult {
 			pidConns[s.PID]++
 		}
 	}
+	pidUnix := make(map[int32]int)
+	for _, u := range result.UnixSockets {
+		if u.PID > 0 {
+			pidUnix[u.PID]++
+		}
+	}
 	for i := range procs {
 		procs[i].NumConns = pidConns[procs[i].PID]
+		procs[i].NumUnixSocks = pidUnix[procs[i].PID]
 	}
 	result.Processes = procs
 

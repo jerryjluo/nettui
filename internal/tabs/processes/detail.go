@@ -25,6 +25,7 @@ func detailContent(rowData map[string]interface{}) string {
 		{"Name", "name"},
 		{"User", "user"},
 		{"Connections", "conns"},
+		{"Unix Sockets", "unix_socks"},
 	}
 
 	for _, f := range fields {

@@ -344,14 +344,14 @@ func (m Model) helpView() string {
 		{"h/l / Tab/Shift+Tab", "Prev / next tab"},
 		{"1-6", "Jump to tab"},
 		{"j/k / arrows", "Navigate rows"},
-		{"J/K", "Page down / up"},
+		{"d/u", "Page down / up"},
 		{"/", "Filter / search"},
 		{"Enter", "Toggle side panel"},
 		{"Esc", "Close panel / clear filter"},
 		{"g", "Go to cross-referenced entity"},
 		{"c", "Copy selection to clipboard"},
 		{"r", "Refresh data"},
-		{"d", "Toggle DNS resolution"},
+		{"D", "Toggle DNS resolution"},
 		{"?", "Toggle this help"},
 	}
 

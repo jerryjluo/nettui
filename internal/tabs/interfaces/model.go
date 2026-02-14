@@ -127,19 +127,7 @@ func (m *Model) DetailContent() string {
 
 // CrossRef implements Tab.
 func (m *Model) CrossRef() *model.CrossRefMsg {
-	row := m.table.HighlightedRow()
-	if row.Data == nil {
-		return nil
-	}
-	name, _ := row.Data["name"].(string)
-	if name == "" {
-		return nil
-	}
-	return &model.CrossRefMsg{
-		TargetTab: model.TabRoutes,
-		FilterKey: "iface",
-		FilterVal: name,
-	}
+	return nil
 }
 
 // NavigateTo implements Tab.

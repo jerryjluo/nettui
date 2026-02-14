@@ -44,11 +44,12 @@ func (m *Model) buildRows() []table.Row {
 	rows := make([]table.Row, 0, len(m.store.Processes))
 	for _, p := range m.store.Processes {
 		rows = append(rows, table.NewRow(table.RowData{
-			"pid":     util.FormatPID(p.PID),
-			"name":    util.FormatProcess(p.Name),
-			"user":    p.User,
-			"conns":   fmt.Sprintf("%d", p.NumConns),
-			"raw_pid": p.PID,
+			"pid":        util.FormatPID(p.PID),
+			"name":       util.FormatProcess(p.Name),
+			"user":       p.User,
+			"conns":      fmt.Sprintf("%d", p.NumConns),
+			"unix_socks": fmt.Sprintf("%d", p.NumUnixSocks),
+			"raw_pid":    p.PID,
 		}))
 	}
 	return rows

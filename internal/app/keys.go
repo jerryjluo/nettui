@@ -77,8 +77,8 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("c", "copy"),
 		),
 		DNS: key.NewBinding(
-			key.WithKeys("d"),
-			key.WithHelp("d", "toggle DNS"),
+			key.WithKeys("D"),
+			key.WithHelp("D", "toggle DNS"),
 		),
 		Help: key.NewBinding(
 			key.WithKeys("?"),
@@ -89,12 +89,12 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("r", "refresh"),
 		),
 		PageUp: key.NewBinding(
-			key.WithKeys("K"),
-			key.WithHelp("K", "page up"),
+			key.WithKeys("u"),
+			key.WithHelp("u", "page up"),
 		),
 		PageDown: key.NewBinding(
-			key.WithKeys("J"),
-			key.WithHelp("J", "page down"),
+			key.WithKeys("d"),
+			key.WithHelp("d", "page down"),
 		),
 	}
 }

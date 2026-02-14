@@ -54,11 +54,12 @@ type UnixSocket struct {
 
 // Process represents a process with network activity.
 type Process struct {
-	PID         int32
-	Name        string
-	User        string
-	NumConns    int
-	Connections []Socket
+	PID          int32
+	Name         string
+	User         string
+	NumConns     int
+	NumUnixSocks int
+	Connections  []Socket
 }
 
 // FirewallRule represents a pf firewall rule.

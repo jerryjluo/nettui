@@ -28,7 +28,7 @@ func RenderStatusBar(state StatusBarState, width int) string {
 	hints := []string{
 		model.HelpKeyStyle.Render("c") + model.HelpDescStyle.Render(":copy"),
 		model.HelpKeyStyle.Render("g") + model.HelpDescStyle.Render(":goto"),
-		model.HelpKeyStyle.Render("d") + model.HelpDescStyle.Render(":DNS"),
+		model.HelpKeyStyle.Render("D") + model.HelpDescStyle.Render(":DNS"),
 		model.HelpKeyStyle.Render("?") + model.HelpDescStyle.Render(":help"),
 	}
 	left = append(left, strings.Join(hints, "  "))
