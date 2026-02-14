@@ -23,6 +23,7 @@ func detailContent(rowData map[string]interface{}) string {
 	}{
 		{"Path", "path"},
 		{"Type", "type"},
+		{"State", "state"},
 		{"PID", "pid"},
 		{"Process", "process"},
 		{"FD", "fd"},

@@ -107,11 +107,20 @@ func parseUnixLsof(output string) []data.UnixSocket {
 			currentFD = value
 		case 'n':
 			if currentPID > 0 {
+				// Infer state from path format: ->0x... means connected,
+				// an actual path means the socket is bound (typically listening).
+				state := ""
+				if strings.HasPrefix(value, "->") {
+					state = "CONNECTED"
+				} else if len(value) > 0 && value[0] == '/' {
+					state = "LISTEN"
+				}
 				sockets = append(sockets, data.UnixSocket{
 					Path:    value,
 					PID:     currentPID,
 					Process: currentCmd,
 					FD:      currentFD,
+					State:   state,
 					Type:    "stream", // lsof -F doesn't easily distinguish; default to stream
 				})
 			}

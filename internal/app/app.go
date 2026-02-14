@@ -48,7 +48,7 @@ type Model struct {
 func New(tabModels []tabs.Tab, collector *sources.Collector) Model {
 	m := Model{
 		tabs:      tabModels,
-		activeTab: model.TabInterfaces,
+		activeTab: model.TabSockets,
 		keys:      DefaultKeyMap(),
 		collector: collector,
 		store:     data.NewStore(),
@@ -170,23 +170,23 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case key.Matches(msg, m.keys.Tab1):
-		m.activeTab = model.TabInterfaces
-		m.updatePanelContent()
-		return m, nil
-	case key.Matches(msg, m.keys.Tab2):
-		m.activeTab = model.TabRoutes
-		m.updatePanelContent()
-		return m, nil
-	case key.Matches(msg, m.keys.Tab3):
 		m.activeTab = model.TabSockets
 		m.updatePanelContent()
 		return m, nil
-	case key.Matches(msg, m.keys.Tab4):
+	case key.Matches(msg, m.keys.Tab2):
 		m.activeTab = model.TabUnixSockets
 		m.updatePanelContent()
 		return m, nil
-	case key.Matches(msg, m.keys.Tab5):
+	case key.Matches(msg, m.keys.Tab3):
 		m.activeTab = model.TabProcesses
+		m.updatePanelContent()
+		return m, nil
+	case key.Matches(msg, m.keys.Tab4):
+		m.activeTab = model.TabInterfaces
+		m.updatePanelContent()
+		return m, nil
+	case key.Matches(msg, m.keys.Tab5):
+		m.activeTab = model.TabRoutes
 		m.updatePanelContent()
 		return m, nil
 	case key.Matches(msg, m.keys.Tab6):

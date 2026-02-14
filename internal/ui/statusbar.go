@@ -62,7 +62,8 @@ func RenderStatusBar(state StatusBarState, width int) string {
 	leftStr := strings.Join(left, "  ")
 	rightStr := strings.Join(right, "  ")
 
-	gap := width - lipgloss.Width(leftStr) - lipgloss.Width(rightStr)
+	// StatusBarStyle has Padding(0, 1) = 2 chars of horizontal padding
+	gap := width - 2 - lipgloss.Width(leftStr) - lipgloss.Width(rightStr)
 	if gap < 1 {
 		gap = 1
 	}

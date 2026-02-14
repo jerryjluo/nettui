@@ -47,6 +47,7 @@ type Socket struct {
 type UnixSocket struct {
 	Path    string
 	Type    string // stream, dgram
+	State   string // LISTEN, CONNECTED, etc.
 	PID     int32
 	Process string
 	FD      string

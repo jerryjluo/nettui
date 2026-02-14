@@ -4,11 +4,11 @@ package model
 type TabID int
 
 const (
-	TabInterfaces TabID = iota
-	TabRoutes
-	TabSockets
+	TabSockets TabID = iota
 	TabUnixSockets
 	TabProcesses
+	TabInterfaces
+	TabRoutes
 	TabFirewall
 )
 

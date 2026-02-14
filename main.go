@@ -20,11 +20,11 @@ func main() {
 	collector := sources.NewCollector()
 
 	tabModels := []tabs.Tab{
-		interfaces.New(),
-		routes.New(),
 		sockets.New(collector.DNSCache()),
 		unixsockets.New(),
 		processes.New(),
+		interfaces.New(),
+		routes.New(),
 		firewall.New(),
 	}
 

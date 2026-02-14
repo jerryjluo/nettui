@@ -43,9 +43,14 @@ func (m *Model) buildRows() []table.Row {
 	}
 	rows := make([]table.Row, 0, len(m.store.UnixSockets))
 	for _, s := range m.store.UnixSockets {
+		state := s.State
+		if state == "" {
+			state = "-"
+		}
 		rows = append(rows, table.NewRow(table.RowData{
 			"path":    s.Path,
 			"type":    s.Type,
+			"state":   state,
 			"pid":     util.FormatPID(s.PID),
 			"process": util.FormatProcess(s.Process),
 			"fd":      s.FD,
