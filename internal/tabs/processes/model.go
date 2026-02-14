@@ -116,6 +116,11 @@ func (m *Model) DetailContent() string {
 
 // CrossRef implements Tab.
 func (m *Model) CrossRef() *model.CrossRefMsg {
+	return nil // chord mode handles goto now
+}
+
+// CrossRefTo returns a CrossRefMsg targeting the given tab, filtered by the selected PID.
+func (m *Model) CrossRefTo(target model.TabID) *model.CrossRefMsg {
 	row := m.table.HighlightedRow()
 	if row.Data == nil {
 		return nil
@@ -125,7 +130,7 @@ func (m *Model) CrossRef() *model.CrossRefMsg {
 		return nil
 	}
 	return &model.CrossRefMsg{
-		TargetTab: model.TabSockets,
+		TargetTab: target,
 		FilterKey: "pid",
 		FilterVal: pid,
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/jerryluo/nettui/internal/data/sources"
 	"github.com/jerryluo/nettui/internal/model"
 	"github.com/jerryluo/nettui/internal/tabs"
+	processesTab "github.com/jerryluo/nettui/internal/tabs/processes"
 	socketsTab "github.com/jerryluo/nettui/internal/tabs/sockets"
 	"github.com/jerryluo/nettui/internal/ui"
 	"github.com/jerryluo/nettui/internal/util"
@@ -19,6 +20,7 @@ import (
 
 type refreshMsg struct{}
 type clearMsgMsg struct{}
+type clearChordMsg struct{}
 
 // Model is the root application model.
 type Model struct {
@@ -34,7 +36,10 @@ type Model struct {
 	height   int
 	showHelp bool
 	dnsOn    bool
-	message string // ephemeral status message
+	message  string // ephemeral status message
+
+	pendingChord rune   // first key of a chord sequence ('g' or 'f')
+	chordHint    string // hint text shown in status bar during chord
 
 	warnings map[model.TabID]bool // tabs with partial data
 }
@@ -98,6 +103,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.message = ""
 		return m, nil
 
+	case clearChordMsg:
+		m.pendingChord = 0
+		m.chordHint = ""
+		return m, nil
+
 	case model.CopyResultMsg:
 		if msg.Success {
 			m.message = "Copied!"
@@ -134,6 +144,11 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		updated, cmd := m.tabs[m.activeTab].Update(msg)
 		m.tabs[m.activeTab] = updated.(tabs.Tab)
 		return m, cmd
+	}
+
+	// If a chord is pending, dispatch to the second-key handler
+	if m.pendingChord != 0 {
+		return m.handleChordSecondKey(msg)
 	}
 
 	switch {
@@ -201,9 +216,25 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case key.Matches(msg, m.keys.GoTo):
+		// On Processes tab, enter chord mode for target selection
+		if m.activeTab == model.TabProcesses {
+			m.pendingChord = 'g'
+			m.chordHint = "g→  n:Sockets  u:Unix"
+			return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
+		}
+		// Other tabs: immediate cross-ref
 		ref := m.tabs[m.activeTab].CrossRef()
 		if ref != nil {
 			return m.Update(*ref)
+		}
+		return m, nil
+
+	case key.Matches(msg, m.keys.ProtoFilter):
+		// On Sockets tab, enter chord mode for protocol filtering
+		if m.activeTab == model.TabSockets {
+			m.pendingChord = 'f'
+			m.chordHint = "f→  t:TCP  u:UDP  4:IPv4  6:IPv6  c:clear"
+			return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
 		}
 		return m, nil
 
@@ -271,6 +302,66 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+func (m Model) handleChordSecondKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	chord := m.pendingChord
+	m.pendingChord = 0
+	m.chordHint = ""
+
+	// Escape cancels the chord
+	if key.Matches(msg, m.keys.Escape) {
+		return m, nil
+	}
+
+	k := msg.String()
+	switch chord {
+	case 'g':
+		return m.handleGotoChord(k)
+	case 'f':
+		return m.handleFilterChord(k)
+	}
+	return m, nil
+}
+
+func (m Model) handleGotoChord(k string) (tea.Model, tea.Cmd) {
+	procTab, ok := m.tabs[model.TabProcesses].(*processesTab.Model)
+	if !ok {
+		return m, nil
+	}
+
+	var ref *model.CrossRefMsg
+	switch k {
+	case "n":
+		ref = procTab.CrossRefTo(model.TabSockets)
+	case "u":
+		ref = procTab.CrossRefTo(model.TabUnixSockets)
+	}
+	if ref != nil {
+		return m.Update(*ref)
+	}
+	return m, nil
+}
+
+func (m Model) handleFilterChord(k string) (tea.Model, tea.Cmd) {
+	sockTab, ok := m.tabs[model.TabSockets].(*socketsTab.Model)
+	if !ok {
+		return m, nil
+	}
+
+	switch k {
+	case "t":
+		sockTab.ToggleTransportFilter(socketsTab.TransportTCP)
+	case "u":
+		sockTab.ToggleTransportFilter(socketsTab.TransportUDP)
+	case "4":
+		sockTab.ToggleIPVersionFilter(socketsTab.IPVersion4)
+	case "6":
+		sockTab.ToggleIPVersionFilter(socketsTab.IPVersion6)
+	case "c":
+		sockTab.ClearProtoFilters()
+	}
+	return m, nil
+}
+
 func (m *Model) updatePanelContent() {
 	if m.panel.Visible() {
 		content := m.tabs[m.activeTab].DetailContent()
@@ -320,11 +411,19 @@ func (m Model) View() string {
 		Height(m.layout.ContentHeight).
 		Render(content)
 
+	// Extract proto filter label from sockets tab
+	var protoFilter string
+	if sockTab, ok := m.tabs[model.TabSockets].(*socketsTab.Model); ok {
+		protoFilter = sockTab.ProtoFilterLabel()
+	}
+
 	// Status bar
 	statusBar := ui.RenderStatusBar(ui.StatusBarState{
-		IsRoot:     m.store.IsRoot,
-		DNSEnabled: m.dnsOn,
-		Message:    m.message,
+		IsRoot:      m.store.IsRoot,
+		DNSEnabled:  m.dnsOn,
+		Message:     m.message,
+		ChordHint:   m.chordHint,
+		ProtoFilter: protoFilter,
 	}, m.width)
 
 	return lipgloss.JoinVertical(lipgloss.Left, tabBar, content, statusBar)
@@ -349,6 +448,9 @@ func (m Model) helpView() string {
 		{"Enter", "Toggle side panel"},
 		{"Esc", "Close panel / clear filter"},
 		{"g", "Go to cross-referenced entity"},
+		{"gn/gu", "Go to Sockets/Unix (Processes tab)"},
+		{"f", "Protocol filter (Sockets tab)"},
+		{"ft/fu/f4/f6/fc", "TCP/UDP/IPv4/IPv6/clear"},
 		{"c", "Copy selection to clipboard"},
 		{"r", "Refresh data"},
 		{"D", "Toggle DNS resolution"},

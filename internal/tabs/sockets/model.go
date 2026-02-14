@@ -2,6 +2,7 @@ package sockets
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,6 +11,24 @@ import (
 	"github.com/jerryluo/nettui/internal/data"
 	"github.com/jerryluo/nettui/internal/data/sources"
 	"github.com/jerryluo/nettui/internal/util"
+)
+
+// TransportFilter selects TCP or UDP sockets.
+type TransportFilter int
+
+const (
+	TransportNone TransportFilter = iota
+	TransportTCP
+	TransportUDP
+)
+
+// IPVersionFilter selects IPv4 or IPv6 sockets.
+type IPVersionFilter int
+
+const (
+	IPVersionNone IPVersionFilter = iota
+	IPVersion4
+	IPVersion6
 )
 
 // Model is the Sockets tab model.
@@ -23,6 +42,9 @@ type Model struct {
 	navVal   string // cross-ref ordering value (Bug 3)
 	dnsCache *sources.DNSCache // DNS cache (Bug 4)
 	dnsOn    bool              // DNS resolution enabled (Bug 4)
+
+	transportFilter TransportFilter
+	ipVersionFilter IPVersionFilter
 }
 
 // New creates a new Sockets tab model.
@@ -47,6 +69,9 @@ func (m *Model) buildRows() []table.Row {
 	}
 	rows := make([]table.Row, 0, len(m.store.Sockets))
 	for _, s := range m.store.Sockets {
+		if !m.matchesProtoFilter(s.Proto) {
+			continue
+		}
 		remoteAddr := s.RemoteAddr
 		if m.dnsOn && m.dnsCache != nil && remoteAddr != "" {
 			remoteAddr = m.dnsCache.Lookup(remoteAddr)
@@ -62,6 +87,91 @@ func (m *Model) buildRows() []table.Row {
 		}))
 	}
 	return rows
+}
+
+func (m *Model) matchesProtoFilter(proto string) bool {
+	p := strings.ToLower(proto)
+	if m.transportFilter != TransportNone {
+		switch m.transportFilter {
+		case TransportTCP:
+			if !strings.HasPrefix(p, "tcp") {
+				return false
+			}
+		case TransportUDP:
+			if !strings.HasPrefix(p, "udp") {
+				return false
+			}
+		}
+	}
+	if m.ipVersionFilter != IPVersionNone {
+		switch m.ipVersionFilter {
+		case IPVersion4:
+			if strings.HasSuffix(p, "6") {
+				return false
+			}
+		case IPVersion6:
+			if !strings.HasSuffix(p, "6") {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// ToggleTransportFilter toggles the given transport filter (or clears it if already active).
+func (m *Model) ToggleTransportFilter(f TransportFilter) {
+	if m.transportFilter == f {
+		m.transportFilter = TransportNone
+	} else {
+		m.transportFilter = f
+	}
+	m.applyFilters()
+}
+
+// ToggleIPVersionFilter toggles the given IP version filter (or clears it if already active).
+func (m *Model) ToggleIPVersionFilter(f IPVersionFilter) {
+	if m.ipVersionFilter == f {
+		m.ipVersionFilter = IPVersionNone
+	} else {
+		m.ipVersionFilter = f
+	}
+	m.applyFilters()
+}
+
+// ClearProtoFilters clears all protocol filters.
+func (m *Model) ClearProtoFilters() {
+	m.transportFilter = TransportNone
+	m.ipVersionFilter = IPVersionNone
+	m.applyFilters()
+}
+
+// ProtoFilterLabel returns a display label for the active protocol filters, or "" if none.
+func (m *Model) ProtoFilterLabel() string {
+	var parts []string
+	switch m.transportFilter {
+	case TransportTCP:
+		parts = append(parts, "TCP")
+	case TransportUDP:
+		parts = append(parts, "UDP")
+	}
+	switch m.ipVersionFilter {
+	case IPVersion4:
+		parts = append(parts, "IPv4")
+	case IPVersion6:
+		parts = append(parts, "IPv6")
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return "[" + strings.Join(parts, "+") + "]"
+}
+
+func (m *Model) applyFilters() {
+	rows := m.buildRows()
+	if m.navKey != "" {
+		rows = m.reorderRows(rows, m.navKey, m.navVal)
+	}
+	m.table = m.table.WithRows(rows)
 }
 
 // SetDNSEnabled enables or disables DNS resolution for remote addresses.

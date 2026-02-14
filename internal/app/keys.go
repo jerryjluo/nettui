@@ -23,8 +23,9 @@ type KeyMap struct {
 	DNS       key.Binding
 	Help      key.Binding
 	Refresh   key.Binding
-	PageUp   key.Binding
-	PageDown key.Binding
+	PageUp      key.Binding
+	PageDown    key.Binding
+	ProtoFilter key.Binding
 }
 
 // DefaultKeyMap returns the default keybindings.
@@ -95,6 +96,10 @@ func DefaultKeyMap() KeyMap {
 		PageDown: key.NewBinding(
 			key.WithKeys("d"),
 			key.WithHelp("d", "page down"),
+		),
+		ProtoFilter: key.NewBinding(
+			key.WithKeys("f"),
+			key.WithHelp("f", "protocol filter"),
 		),
 	}
 }

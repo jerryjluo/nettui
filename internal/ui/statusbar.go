@@ -10,10 +10,12 @@ import (
 
 // StatusBarState holds the current state for status bar rendering.
 type StatusBarState struct {
-	IsRoot     bool
-	DNSEnabled bool
-	FilterText string
-	Message    string
+	IsRoot      bool
+	DNSEnabled  bool
+	FilterText  string
+	Message     string
+	ChordHint   string
+	ProtoFilter string
 }
 
 // RenderStatusBar renders the bottom status bar.
@@ -25,16 +27,24 @@ func RenderStatusBar(state StatusBarState, width int) string {
 		left = append(left, fmt.Sprintf("/%s", state.FilterText))
 	}
 
-	hints := []string{
-		model.HelpKeyStyle.Render("c") + model.HelpDescStyle.Render(":copy"),
-		model.HelpKeyStyle.Render("g") + model.HelpDescStyle.Render(":goto"),
-		model.HelpKeyStyle.Render("D") + model.HelpDescStyle.Render(":DNS"),
-		model.HelpKeyStyle.Render("?") + model.HelpDescStyle.Render(":help"),
+	if state.ChordHint != "" {
+		left = append(left, lipgloss.NewStyle().Foreground(model.AccentColor).Bold(true).Render(state.ChordHint))
+	} else {
+		hints := []string{
+			model.HelpKeyStyle.Render("c") + model.HelpDescStyle.Render(":copy"),
+			model.HelpKeyStyle.Render("g") + model.HelpDescStyle.Render(":goto"),
+			model.HelpKeyStyle.Render("D") + model.HelpDescStyle.Render(":DNS"),
+			model.HelpKeyStyle.Render("?") + model.HelpDescStyle.Render(":help"),
+		}
+		left = append(left, strings.Join(hints, "  "))
 	}
-	left = append(left, strings.Join(hints, "  "))
 
 	if state.Message != "" {
 		left = append(left, lipgloss.NewStyle().Foreground(model.SuccessColor).Render(state.Message))
+	}
+
+	if state.ProtoFilter != "" {
+		right = append(right, lipgloss.NewStyle().Foreground(model.AccentColor).Bold(true).Render(state.ProtoFilter))
 	}
 
 	if !state.IsRoot {
