@@ -22,8 +22,8 @@ type KeyMap struct {
 	Copy      key.Binding
 	DNS       key.Binding
 	Help      key.Binding
-	PanelUp   key.Binding
-	PanelDown key.Binding
+	PageUp   key.Binding
+	PageDown key.Binding
 }
 
 // DefaultKeyMap returns the default keybindings.
@@ -34,12 +34,12 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("q/ctrl+c", "quit"),
 		),
 		NextTab: key.NewBinding(
-			key.WithKeys("tab"),
-			key.WithHelp("tab", "next tab"),
+			key.WithKeys("l", "tab"),
+			key.WithHelp("l/tab", "next tab"),
 		),
 		PrevTab: key.NewBinding(
-			key.WithKeys("shift+tab"),
-			key.WithHelp("shift+tab", "prev tab"),
+			key.WithKeys("h", "shift+tab"),
+			key.WithHelp("h/shift+tab", "prev tab"),
 		),
 		Tab1: key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "Interfaces")),
 		Tab2: key.NewBinding(key.WithKeys("2"), key.WithHelp("2", "Routes")),
@@ -83,13 +83,13 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("?"),
 			key.WithHelp("?", "help"),
 		),
-		PanelUp: key.NewBinding(
+		PageUp: key.NewBinding(
 			key.WithKeys("K"),
-			key.WithHelp("K", "panel up"),
+			key.WithHelp("K", "page up"),
 		),
-		PanelDown: key.NewBinding(
+		PageDown: key.NewBinding(
 			key.WithKeys("J"),
-			key.WithHelp("J", "panel down"),
+			key.WithHelp("J", "page down"),
 		),
 	}
 }

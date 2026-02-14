@@ -248,17 +248,19 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
-	case key.Matches(msg, m.keys.PanelDown):
-		if m.panel.Visible() {
-			m.panel.ScrollDown()
-			return m, nil
-		}
+	case key.Matches(msg, m.keys.PageDown):
+		synth := tea.KeyMsg{Type: tea.KeyPgDown}
+		var cmd tea.Cmd
+		updated, cmd := m.tabs[m.activeTab].Update(synth)
+		m.tabs[m.activeTab] = updated.(tabs.Tab)
+		return m, cmd
 
-	case key.Matches(msg, m.keys.PanelUp):
-		if m.panel.Visible() {
-			m.panel.ScrollUp()
-			return m, nil
-		}
+	case key.Matches(msg, m.keys.PageUp):
+		synth := tea.KeyMsg{Type: tea.KeyPgUp}
+		var cmd tea.Cmd
+		updated, cmd := m.tabs[m.activeTab].Update(synth)
+		m.tabs[m.activeTab] = updated.(tabs.Tab)
+		return m, cmd
 
 	case key.Matches(msg, m.keys.Filter):
 		// Delegate '/' to the active tab to start filtering
@@ -336,16 +338,16 @@ func (m Model) helpView() string {
 		desc string
 	}{
 		{"q / Ctrl+C", "Quit"},
-		{"Tab / Shift+Tab", "Next / prev tab"},
+		{"h/l / Tab/Shift+Tab", "Prev / next tab"},
 		{"1-6", "Jump to tab"},
 		{"j/k / arrows", "Navigate rows"},
+		{"J/K", "Page down / up"},
 		{"/", "Filter / search"},
 		{"Enter", "Toggle side panel"},
 		{"Esc", "Close panel / clear filter"},
 		{"g", "Go to cross-referenced entity"},
 		{"c", "Copy selection to clipboard"},
 		{"d", "Toggle DNS resolution"},
-		{"J/K", "Scroll panel down/up"},
 		{"?", "Toggle this help"},
 	}
 
