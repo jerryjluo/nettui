@@ -22,7 +22,7 @@ func main() {
 	tabModels := []tabs.Tab{
 		interfaces.New(),
 		routes.New(),
-		sockets.New(),
+		sockets.New(collector.DNSCache()),
 		unixsockets.New(),
 		processes.New(),
 		firewall.New(),

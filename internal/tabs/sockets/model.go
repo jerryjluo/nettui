@@ -8,22 +8,28 @@ import (
 	"github.com/evertras/bubble-table/table"
 	"github.com/jerryluo/nettui/internal/model"
 	"github.com/jerryluo/nettui/internal/data"
+	"github.com/jerryluo/nettui/internal/data/sources"
 	"github.com/jerryluo/nettui/internal/util"
 )
 
 // Model is the Sockets tab model.
 type Model struct {
-	table  table.Model
-	store  *data.Store
-	width  int
-	height int
-	tabID  model.TabID
+	table    table.Model
+	store    *data.Store
+	width    int
+	height   int
+	tabID    model.TabID
+	navKey   string // cross-ref ordering key (Bug 3)
+	navVal   string // cross-ref ordering value (Bug 3)
+	dnsCache *sources.DNSCache // DNS cache (Bug 4)
+	dnsOn    bool              // DNS resolution enabled (Bug 4)
 }
 
 // New creates a new Sockets tab model.
-func New() *Model {
+func New(dns *sources.DNSCache) *Model {
 	m := &Model{
-		tabID: model.TabSockets,
+		tabID:    model.TabSockets,
+		dnsCache: dns,
 	}
 	m.table = table.New(columns()).
 		WithBaseStyle(lipgloss.NewStyle()).
@@ -41,10 +47,14 @@ func (m *Model) buildRows() []table.Row {
 	}
 	rows := make([]table.Row, 0, len(m.store.Sockets))
 	for _, s := range m.store.Sockets {
+		remoteAddr := s.RemoteAddr
+		if m.dnsOn && m.dnsCache != nil && remoteAddr != "" {
+			remoteAddr = m.dnsCache.Lookup(remoteAddr)
+		}
 		rows = append(rows, table.NewRow(table.RowData{
 			"proto":   s.Proto,
 			"local":   util.FormatAddrPort(s.LocalAddr, s.LocalPort),
-			"remote":  util.FormatAddrPort(s.RemoteAddr, s.RemotePort),
+			"remote":  util.FormatAddrPort(remoteAddr, s.RemotePort),
 			"state":   s.State,
 			"pid":     util.FormatPID(s.PID),
 			"process": util.FormatProcess(s.Process),
@@ -52,6 +62,11 @@ func (m *Model) buildRows() []table.Row {
 		}))
 	}
 	return rows
+}
+
+// SetDNSEnabled enables or disables DNS resolution for remote addresses.
+func (m *Model) SetDNSEnabled(on bool) {
+	m.dnsOn = on
 }
 
 // Init implements tea.Model.
@@ -74,14 +89,18 @@ func (m *Model) View() string {
 // SetData implements Tab.
 func (m *Model) SetData(store *data.Store) {
 	m.store = store
-	m.table = m.table.WithRows(m.buildRows())
+	rows := m.buildRows()
+	if m.navKey != "" {
+		rows = m.reorderRows(rows, m.navKey, m.navVal)
+	}
+	m.table = m.table.WithRows(rows)
 }
 
 // SetSize implements Tab.
 func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-	m.table = m.table.WithPageSize(height - 4).WithMaxTotalWidth(width)
+	m.table = m.table.WithPageSize(height - 6).WithMaxTotalWidth(width)
 }
 
 // TabID implements Tab.
@@ -132,21 +151,26 @@ func (m *Model) NavigateTo(key, val string) {
 	if key != "pid" {
 		return
 	}
-	rows := m.buildRows()
+	m.navKey = key
+	m.navVal = val
+	rows := m.reorderRows(m.buildRows(), key, val)
+	m.table = m.table.WithRows(rows)
+}
+
+func (m *Model) reorderRows(rows []table.Row, key, val string) []table.Row {
 	reordered := make([]table.Row, 0, len(rows))
 	var rest []table.Row
 	for _, r := range rows {
-		if fmt.Sprintf("%v", r.Data["pid"]) == val {
+		if fmt.Sprintf("%v", r.Data[key]) == val {
 			reordered = append(reordered, r)
 		} else {
 			rest = append(rest, r)
 		}
 	}
-	reordered = append(reordered, rest...)
-	m.table = m.table.WithRows(reordered)
+	return append(reordered, rest...)
 }
 
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
-	return m.table.GetIsFilterActive()
+	return m.table.GetIsFilterInputFocused()
 }

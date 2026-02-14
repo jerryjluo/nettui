@@ -27,7 +27,11 @@ func RenderTabBar(activeTab model.TabID, width int, warnings map[model.TabID]boo
 	}
 
 	row := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
-	line := strings.Repeat("─", max(0, width-lipgloss.Width(row)))
+	if lipgloss.Width(row) > width {
+		row = lipgloss.NewStyle().MaxWidth(width).Render(row)
+	}
+	lineWidth := max(0, width-lipgloss.Width(row))
+	line := strings.Repeat("─", lineWidth)
 	return lipgloss.JoinHorizontal(lipgloss.Bottom, row, lipgloss.NewStyle().Foreground(model.MutedColor).Render(line))
 }
 

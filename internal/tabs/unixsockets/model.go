@@ -18,6 +18,8 @@ type Model struct {
 	width  int
 	height int
 	tabID  model.TabID
+	navKey string
+	navVal string
 }
 
 // New creates a new Unix Sockets tab model.
@@ -73,14 +75,18 @@ func (m *Model) View() string {
 // SetData implements Tab.
 func (m *Model) SetData(store *data.Store) {
 	m.store = store
-	m.table = m.table.WithRows(m.buildRows())
+	rows := m.buildRows()
+	if m.navKey != "" {
+		rows = m.reorderRows(rows, m.navKey, m.navVal)
+	}
+	m.table = m.table.WithRows(rows)
 }
 
 // SetSize implements Tab.
 func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-	m.table = m.table.WithPageSize(height - 4).WithMaxTotalWidth(width)
+	m.table = m.table.WithPageSize(height - 6).WithMaxTotalWidth(width)
 }
 
 // TabID implements Tab.
@@ -130,21 +136,26 @@ func (m *Model) NavigateTo(key, val string) {
 	if key != "pid" {
 		return
 	}
-	rows := m.buildRows()
+	m.navKey = key
+	m.navVal = val
+	rows := m.reorderRows(m.buildRows(), key, val)
+	m.table = m.table.WithRows(rows)
+}
+
+func (m *Model) reorderRows(rows []table.Row, key, val string) []table.Row {
 	reordered := make([]table.Row, 0, len(rows))
 	var rest []table.Row
 	for _, r := range rows {
-		if fmt.Sprintf("%v", r.Data["pid"]) == val {
+		if fmt.Sprintf("%v", r.Data[key]) == val {
 			reordered = append(reordered, r)
 		} else {
 			rest = append(rest, r)
 		}
 	}
-	reordered = append(reordered, rest...)
-	m.table = m.table.WithRows(reordered)
+	return append(reordered, rest...)
 }
 
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
-	return m.table.GetIsFilterActive()
+	return m.table.GetIsFilterInputFocused()
 }

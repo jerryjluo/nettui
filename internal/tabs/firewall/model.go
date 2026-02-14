@@ -88,7 +88,7 @@ func (m *Model) SetData(store *data.Store) {
 func (m *Model) SetSize(width, height int) {
 	m.width = width
 	m.height = height
-	m.table = m.table.WithPageSize(height - 4).WithMaxTotalWidth(width)
+	m.table = m.table.WithPageSize(height - 6).WithMaxTotalWidth(width)
 }
 
 // TabID implements Tab.
@@ -135,5 +135,5 @@ func (m *Model) NavigateTo(key, val string) {
 
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
-	return m.table.GetIsFilterActive()
+	return m.table.GetIsFilterInputFocused()
 }

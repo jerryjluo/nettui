@@ -12,6 +12,7 @@ import (
 	"github.com/jerryluo/nettui/internal/data/sources"
 	"github.com/jerryluo/nettui/internal/model"
 	"github.com/jerryluo/nettui/internal/tabs"
+	socketsTab "github.com/jerryluo/nettui/internal/tabs/sockets"
 	"github.com/jerryluo/nettui/internal/ui"
 	"github.com/jerryluo/nettui/internal/util"
 )
@@ -241,6 +242,10 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case key.Matches(msg, m.keys.DNS):
 		m.dnsOn = !m.dnsOn
+		// Propagate DNS state to the sockets tab.
+		if sockTab, ok := m.tabs[model.TabSockets].(*socketsTab.Model); ok {
+			sockTab.SetDNSEnabled(m.dnsOn)
+		}
 		return m, nil
 
 	case key.Matches(msg, m.keys.PanelDown):
