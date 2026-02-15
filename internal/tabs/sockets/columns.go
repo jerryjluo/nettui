@@ -8,7 +8,7 @@ func columns() []table.Column {
 		table.NewFlexColumn("local", "Local Address", 1).WithFiltered(true),
 		table.NewFlexColumn("remote", "Remote Address", 1).WithFiltered(true),
 		table.NewColumn("state", "State", 14),
-		table.NewColumn("pid", "PID", 8),
+		table.NewColumn("pid", "PID", 8).WithFiltered(true),
 		table.NewColumn("process", "Process", 18).WithFiltered(true),
 	}
 }

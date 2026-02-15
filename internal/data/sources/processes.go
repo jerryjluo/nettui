@@ -23,15 +23,21 @@ func CollectProcesses() ([]data.Process, []data.CollectionError) {
 			name = ""
 		}
 
+		cmdline, err := p.Cmdline()
+		if err != nil {
+			cmdline = ""
+		}
+
 		user, err := p.Username()
 		if err != nil {
 			user = ""
 		}
 
 		result = append(result, data.Process{
-			PID:  p.Pid,
-			Name: name,
-			User: user,
+			PID:     p.Pid,
+			Name:    name,
+			Command: cmdline,
+			User:    user,
 		})
 	}
 

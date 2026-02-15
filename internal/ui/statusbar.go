@@ -31,13 +31,7 @@ func RenderStatusBar(state StatusBarState, width int) string {
 	if state.ChordHint != "" {
 		left = append(left, lipgloss.NewStyle().Foreground(model.AccentColor).Bold(true).Render(state.ChordHint))
 	} else {
-		hints := []string{
-			model.HelpKeyStyle.Render("c") + model.HelpDescStyle.Render(":copy"),
-			model.HelpKeyStyle.Render("g") + model.HelpDescStyle.Render(":goto"),
-			model.HelpKeyStyle.Render("D") + model.HelpDescStyle.Render(":DNS"),
-			model.HelpKeyStyle.Render("?") + model.HelpDescStyle.Render(":help"),
-		}
-		left = append(left, strings.Join(hints, "  "))
+		left = append(left, model.HelpKeyStyle.Render("?")+model.HelpDescStyle.Render(":help"))
 	}
 
 	if state.Message != "" {

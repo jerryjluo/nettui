@@ -171,7 +171,20 @@ func (m *Model) SortLabel() string {
 	return m.sort.Label()
 }
 
+// SetPanelWidth implements Tab.
+func (m *Model) SetPanelWidth(width int) {}
+
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
 	return m.table.GetIsFilterInputFocused()
+}
+
+// HasActiveFilter implements Tab.
+func (m *Model) HasActiveFilter() bool {
+	return m.table.GetCurrentFilter() != ""
+}
+
+// ClearFilter implements Tab.
+func (m *Model) ClearFilter() {
+	m.table = m.table.WithFilterInputValue("")
 }

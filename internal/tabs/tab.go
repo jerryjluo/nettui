@@ -34,6 +34,12 @@ type Tab interface {
 	// IsFiltering returns true if the tab is in filter mode.
 	IsFiltering() bool
 
+	// HasActiveFilter returns true if a search filter is currently applied.
+	HasActiveFilter() bool
+
+	// ClearFilter clears the current search filter text.
+	ClearFilter()
+
 	// SortHint returns the chord hint for sort keys on this tab.
 	SortHint() string
 
@@ -42,4 +48,7 @@ type Tab interface {
 
 	// SortLabel returns the current sort indicator (e.g. "[↑Proto]"), or "".
 	SortLabel() string
+
+	// SetPanelWidth stores the detail panel width for content wrapping.
+	SetPanelWidth(width int)
 }

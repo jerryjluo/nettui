@@ -57,6 +57,7 @@ type UnixSocket struct {
 type Process struct {
 	PID          int32
 	Name         string
+	Command      string
 	User         string
 	NumConns     int
 	NumUnixSocks int

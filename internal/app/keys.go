@@ -63,8 +63,8 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("/", "filter"),
 		),
 		Enter: key.NewBinding(
-			key.WithKeys("enter"),
-			key.WithHelp("enter", "detail panel"),
+			key.WithKeys("p"),
+			key.WithHelp("p", "detail panel"),
 		),
 		Escape: key.NewBinding(
 			key.WithKeys("esc"),
@@ -75,8 +75,8 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("g", "go to ref"),
 		),
 		Copy: key.NewBinding(
-			key.WithKeys("c"),
-			key.WithHelp("c", "copy"),
+			key.WithKeys("y"),
+			key.WithHelp("y", "yank (copy)"),
 		),
 		DNS: key.NewBinding(
 			key.WithKeys("D"),

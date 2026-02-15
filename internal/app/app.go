@@ -204,16 +204,17 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case key.Matches(msg, m.keys.Escape):
+		// If a search filter is active, clear it first
+		if m.tabs[m.activeTab].HasActiveFilter() {
+			m.tabs[m.activeTab].ClearFilter()
+			return m, nil
+		}
 		if m.panel.Visible() {
 			m.panel.Hide()
 			m.recalcLayout()
 			return m, nil
 		}
-		// Delegate to tab (e.g. clear filter)
-		var cmd tea.Cmd
-		updated, cmd := m.tabs[m.activeTab].Update(msg)
-		m.tabs[m.activeTab] = updated.(tabs.Tab)
-		return m, cmd
+		return m, nil
 
 	case key.Matches(msg, m.keys.GoTo):
 		// On Processes tab, enter chord mode for target selection
@@ -416,6 +417,9 @@ func (m *Model) recalcLayout() {
 	if m.layout.PanelOpen {
 		m.panel.SetSize(m.layout.PanelWidth, m.layout.ContentHeight)
 	}
+	for _, t := range m.tabs {
+		t.SetPanelWidth(m.layout.PanelWidth)
+	}
 }
 
 // View implements tea.Model.
@@ -487,15 +491,15 @@ func (m Model) helpView() string {
 		{"j/k / arrows", "Navigate rows"},
 		{"d/u", "Page down / up"},
 		{"/", "Filter / search"},
-		{"Enter", "Toggle side panel"},
-		{"Esc", "Close panel / clear filter"},
+		{"p", "Toggle side panel"},
+		{"Esc", "Clear filter / close panel"},
 		{"g", "Go to cross-referenced entity"},
 		{"gn/gu", "Go to Sockets/Unix (Processes tab)"},
 		{"gp/gr", "Go to Process/Remote (Sockets tab)"},
 		{"f", "Protocol filter (Sockets tab)"},
 		{"ft/fu/f4/f6/fc", "TCP/UDP/IPv4/IPv6/clear"},
 		{"s", "Sort by column (chord)"},
-		{"c", "Copy selection to clipboard"},
+		{"y", "Yank (copy) selection to clipboard"},
 		{"r", "Refresh data"},
 		{"D", "Toggle DNS resolution"},
 		{"?", "Toggle this help"},

@@ -21,12 +21,14 @@ type Model struct {
 	tabID  model.TabID
 	navKey string
 	navVal string
-	sort   tabs.SortState
+	sort       tabs.SortState
+	panelWidth int
 }
 
 var sortEntries = []tabs.SortEntry{
 	{Key: "i", ColKey: "pid", SortKey: "raw_pid", Label: "PID"},
 	{Key: "n", ColKey: "name", SortKey: "name", Label: "Name"},
+	{Key: "m", ColKey: "command", SortKey: "command", Label: "Command"},
 	{Key: "u", ColKey: "user", SortKey: "user", Label: "User"},
 	{Key: "c", ColKey: "conns", SortKey: "conns", Label: "#Conns"},
 	{Key: "x", ColKey: "unix_socks", SortKey: "unix_socks", Label: "#Unix"},
@@ -56,6 +58,7 @@ func (m *Model) buildRows() []table.Row {
 		rows = append(rows, table.NewRow(table.RowData{
 			"pid":        util.FormatPID(p.PID),
 			"name":       util.FormatProcess(p.Name),
+			"command":    p.Command,
 			"user":       p.User,
 			"conns":      fmt.Sprintf("%d", p.NumConns),
 			"unix_socks": fmt.Sprintf("%d", p.NumUnixSocks),
@@ -123,7 +126,7 @@ func (m *Model) DetailContent() string {
 	if row.Data == nil {
 		return ""
 	}
-	return detailContent(row.Data)
+	return detailContent(row.Data, m.panelWidth)
 }
 
 // CrossRef implements Tab.
@@ -195,7 +198,22 @@ func (m *Model) SortLabel() string {
 	return m.sort.Label()
 }
 
+// SetPanelWidth implements Tab.
+func (m *Model) SetPanelWidth(width int) {
+	m.panelWidth = width
+}
+
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
 	return m.table.GetIsFilterInputFocused()
+}
+
+// HasActiveFilter implements Tab.
+func (m *Model) HasActiveFilter() bool {
+	return m.table.GetCurrentFilter() != ""
+}
+
+// ClearFilter implements Tab.
+func (m *Model) ClearFilter() {
+	m.table = m.table.WithFilterInputValue("")
 }
