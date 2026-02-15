@@ -222,6 +222,12 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.chordHint = "g→  n:Sockets  u:Unix"
 			return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
 		}
+		// On Sockets tab, enter chord mode for go-to selection
+		if m.activeTab == model.TabSockets {
+			m.pendingChord = 'g'
+			m.chordHint = "g→  p:Process  r:Remote"
+			return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
+		}
 		// Other tabs: immediate cross-ref
 		ref := m.tabs[m.activeTab].CrossRef()
 		if ref != nil {
@@ -330,20 +336,39 @@ func (m Model) handleChordSecondKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) handleGotoChord(k string) (tea.Model, tea.Cmd) {
-	procTab, ok := m.tabs[model.TabProcesses].(*processesTab.Model)
-	if !ok {
-		return m, nil
-	}
+	switch m.activeTab {
+	case model.TabProcesses:
+		procTab, ok := m.tabs[model.TabProcesses].(*processesTab.Model)
+		if !ok {
+			return m, nil
+		}
+		var ref *model.CrossRefMsg
+		switch k {
+		case "n":
+			ref = procTab.CrossRefTo(model.TabSockets)
+		case "u":
+			ref = procTab.CrossRefTo(model.TabUnixSockets)
+		}
+		if ref != nil {
+			return m.Update(*ref)
+		}
 
-	var ref *model.CrossRefMsg
-	switch k {
-	case "n":
-		ref = procTab.CrossRefTo(model.TabSockets)
-	case "u":
-		ref = procTab.CrossRefTo(model.TabUnixSockets)
-	}
-	if ref != nil {
-		return m.Update(*ref)
+	case model.TabSockets:
+		sockTab, ok := m.tabs[model.TabSockets].(*socketsTab.Model)
+		if !ok {
+			return m, nil
+		}
+		switch k {
+		case "p":
+			ref := sockTab.CrossRef()
+			if ref != nil {
+				return m.Update(*ref)
+			}
+		case "r":
+			if sockTab.GoToRemotePeer() {
+				m.updatePanelContent()
+			}
+		}
 	}
 	return m, nil
 }
@@ -466,6 +491,7 @@ func (m Model) helpView() string {
 		{"Esc", "Close panel / clear filter"},
 		{"g", "Go to cross-referenced entity"},
 		{"gn/gu", "Go to Sockets/Unix (Processes tab)"},
+		{"gp/gr", "Go to Process/Remote (Sockets tab)"},
 		{"f", "Protocol filter (Sockets tab)"},
 		{"ft/fu/f4/f6/fc", "TCP/UDP/IPv4/IPv6/clear"},
 		{"s", "Sort by column (chord)"},

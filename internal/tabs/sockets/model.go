@@ -89,13 +89,17 @@ func (m *Model) buildRows() []table.Row {
 			remoteAddr = m.dnsCache.Lookup(remoteAddr)
 		}
 		rows = append(rows, table.NewRow(table.RowData{
-			"proto":   s.Proto,
-			"local":   util.FormatAddrPort(s.LocalAddr, s.LocalPort),
-			"remote":  util.FormatAddrPort(remoteAddr, s.RemotePort),
-			"state":   s.State,
-			"pid":     util.FormatPID(s.PID),
-			"process": util.FormatProcess(s.Process),
-			"raw_pid": s.PID,
+			"proto":           s.Proto,
+			"local":           util.FormatAddrPort(s.LocalAddr, s.LocalPort),
+			"remote":          util.FormatAddrPort(remoteAddr, s.RemotePort),
+			"state":           s.State,
+			"pid":             util.FormatPID(s.PID),
+			"process":         util.FormatProcess(s.Process),
+			"raw_pid":         s.PID,
+			"raw_local_addr":  s.LocalAddr,
+			"raw_local_port":  s.LocalPort,
+			"raw_remote_addr": s.RemoteAddr,
+			"raw_remote_port": s.RemotePort,
 		}))
 	}
 	return rows
@@ -320,4 +324,72 @@ func (m *Model) SortLabel() string {
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
 	return m.table.GetIsFilterInputFocused()
+}
+
+// GoToRemotePeer navigates to the socket whose local address matches
+// the current row's remote address, if the remote is localhost.
+// Prefers a bidirectional match (peer's remote points back to us).
+func (m *Model) GoToRemotePeer() bool {
+	row := m.table.HighlightedRow()
+	if row.Data == nil {
+		return false
+	}
+	localAddr, _ := row.Data["raw_local_addr"].(string)
+	localPort, _ := row.Data["raw_local_port"].(uint32)
+	remoteAddr, _ := row.Data["raw_remote_addr"].(string)
+	remotePort, _ := row.Data["raw_remote_port"].(uint32)
+	if remoteAddr == "" || remotePort == 0 {
+		return false
+	}
+	if !isLocalhost(remoteAddr) {
+		return false
+	}
+
+	// Build rows in current display order
+	rows := m.buildRows()
+	if m.sort.Active() {
+		m.sort.SortRows(rows)
+	} else if m.navKey != "" {
+		rows = m.reorderRows(rows, m.navKey, m.navVal)
+	}
+
+	// First pass: bidirectional match — peer's local matches our remote
+	// AND peer's remote matches our local (the true connection peer).
+	for i, r := range rows {
+		rl, _ := r.Data["raw_local_addr"].(string)
+		rlp, _ := r.Data["raw_local_port"].(uint32)
+		rr, _ := r.Data["raw_remote_addr"].(string)
+		rrp, _ := r.Data["raw_remote_port"].(uint32)
+		if rl == remoteAddr && rlp == remotePort &&
+			rr == localAddr && rrp == localPort {
+			m.table = m.table.WithHighlightedRow(i)
+			return true
+		}
+	}
+
+	// Fallback: one-directional match on local address only
+	target := util.FormatAddrPort(remoteAddr, remotePort)
+	for i, r := range rows {
+		local, _ := r.Data["local"].(string)
+		if local == target {
+			m.table = m.table.WithHighlightedRow(i)
+			return true
+		}
+	}
+
+	// Try wildcard match (*:port) for sockets bound to 0.0.0.0 or ::
+	wildcard := util.FormatAddrPort("", remotePort)
+	for i, r := range rows {
+		local, _ := r.Data["local"].(string)
+		if local == wildcard {
+			m.table = m.table.WithHighlightedRow(i)
+			return true
+		}
+	}
+
+	return false
+}
+
+func isLocalhost(addr string) bool {
+	return addr == "127.0.0.1" || addr == "::1" || addr == "localhost"
 }
