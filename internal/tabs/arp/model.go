@@ -1,42 +1,37 @@
-package interfaces
+package arp
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/evertras/bubble-table/table"
-	"github.com/jerryluo/nettui/internal/model"
 	"github.com/jerryluo/nettui/internal/data"
+	"github.com/jerryluo/nettui/internal/model"
 	"github.com/jerryluo/nettui/internal/tabs"
-	"github.com/jerryluo/nettui/internal/util"
 )
 
-// Model is the Interfaces tab model.
+// Model is the ARP tab model.
 type Model struct {
 	table  table.Model
 	store  *data.Store
 	width  int
 	height int
 	tabID  model.TabID
-	navKey string
-	navVal string
 	sort   tabs.SortState
 }
 
 var sortEntries = []tabs.SortEntry{
-	{Key: "n", ColKey: "name", SortKey: "name", Label: "Name"},
-	{Key: "m", ColKey: "mtu", SortKey: "mtu", Label: "MTU"},
-	{Key: "s", ColKey: "status", SortKey: "status", Label: "Status"},
-	{Key: "t", ColKey: "tx_bytes", SortKey: "raw_tx", Label: "TX"},
-	{Key: "r", ColKey: "rx_bytes", SortKey: "raw_rx", Label: "RX"},
+	{Key: "i", ColKey: "ip", SortKey: "ip", Label: "IP"},
+	{Key: "m", ColKey: "mac", SortKey: "mac", Label: "MAC"},
+	{Key: "n", ColKey: "iface", SortKey: "iface", Label: "Interface"},
+	{Key: "f", ColKey: "flags", SortKey: "flags", Label: "Flags"},
 }
 
-// New creates a new Interfaces tab model.
+// New creates a new ARP tab model.
 func New() *Model {
 	m := &Model{
-		tabID: model.TabInterfaces,
+		tabID: model.TabARP,
 	}
 	m.table = table.New(columns()).
 		WithBaseStyle(lipgloss.NewStyle()).
@@ -53,27 +48,15 @@ func (m *Model) buildRows() []table.Row {
 	if m.store == nil {
 		return nil
 	}
-	rows := make([]table.Row, 0, len(m.store.Interfaces))
-	for _, iface := range m.store.Interfaces {
-		status := "down"
-		if iface.Up {
-			status = "up"
-		}
+	rows := make([]table.Row, 0, len(m.store.ARPEntries))
+	for _, e := range m.store.ARPEntries {
 		rows = append(rows, table.NewRow(table.RowData{
-			"name":    iface.Name,
-			"addrs":   strings.Join(iface.Addrs, ", "),
-			"mac":     iface.HWAddr,
-			"mtu":     fmt.Sprintf("%d", iface.MTU),
-			"status":  status,
-			"tx_bytes": util.FormatBytes(iface.BytesSent),
-			"rx_bytes": util.FormatBytes(iface.BytesRecv),
-			"tx_rate": util.FormatRate(iface.TxRate),
-			"rx_rate": util.FormatRate(iface.RxRate),
-			"tx_pkts": fmt.Sprintf("%d", iface.PacketSent),
-			"rx_pkts": fmt.Sprintf("%d", iface.PacketRecv),
-			"flags":   iface.Flags.String(),
-			"raw_tx":  iface.BytesSent,
-			"raw_rx":  iface.BytesRecv,
+			"ip":       e.IP,
+			"mac":      e.MAC,
+			"iface":    e.Interface,
+			"hostname": e.Hostname,
+			"flags":    e.Flags,
+			"type":     e.Type,
 		}))
 	}
 	return rows
@@ -81,7 +64,7 @@ func (m *Model) buildRows() []table.Row {
 
 // YankHint implements Tab.
 func (m *Model) YankHint() string {
-	return "y→  n:Name  a:Addrs  m:MAC  y:All"
+	return "y→  i:IP  m:MAC  n:Iface  y:All"
 }
 
 // YankField implements Tab.
@@ -91,14 +74,14 @@ func (m *Model) YankField(key string) string {
 		return ""
 	}
 	switch key {
-	case "n":
-		v, _ := row.Data["name"].(string)
-		return v
-	case "a":
-		v, _ := row.Data["addrs"].(string)
+	case "i":
+		v, _ := row.Data["ip"].(string)
 		return v
 	case "m":
 		v, _ := row.Data["mac"].(string)
+		return v
+	case "n":
+		v, _ := row.Data["iface"].(string)
 		return v
 	case "y":
 		return m.SelectedRow()
@@ -129,8 +112,6 @@ func (m *Model) SetData(store *data.Store) {
 	rows := m.buildRows()
 	if m.sort.Active() {
 		m.sort.SortRows(rows)
-	} else if m.navKey != "" {
-		rows = m.reorderRows(rows, m.navKey, m.navVal)
 	}
 	m.table = m.table.WithRows(rows)
 }
@@ -153,9 +134,10 @@ func (m *Model) SelectedRow() string {
 	if row.Data == nil {
 		return ""
 	}
-	name, _ := row.Data["name"].(string)
-	addrs, _ := row.Data["addrs"].(string)
-	return fmt.Sprintf("%s (%s)", name, addrs)
+	ip, _ := row.Data["ip"].(string)
+	mac, _ := row.Data["mac"].(string)
+	iface, _ := row.Data["iface"].(string)
+	return fmt.Sprintf("%s at %s on %s", ip, mac, iface)
 }
 
 // DetailContent implements Tab.
@@ -169,45 +151,11 @@ func (m *Model) DetailContent() string {
 
 // CrossRef implements Tab.
 func (m *Model) CrossRef() *model.CrossRefMsg {
-	row := m.table.HighlightedRow()
-	if row.Data == nil {
-		return nil
-	}
-	name, _ := row.Data["name"].(string)
-	if name == "" {
-		return nil
-	}
-	return &model.CrossRefMsg{
-		TargetTab: model.TabRoutes,
-		FilterKey: "iface",
-		FilterVal: name,
-	}
+	return nil
 }
 
 // NavigateTo implements Tab.
-func (m *Model) NavigateTo(key, val string) {
-	if key != "name" {
-		return
-	}
-	m.sort.Clear()
-	m.navKey = key
-	m.navVal = val
-	rows := m.reorderRows(m.buildRows(), key, val)
-	m.table = m.table.WithRows(rows).WithHighlightedRow(0)
-}
-
-func (m *Model) reorderRows(rows []table.Row, key, val string) []table.Row {
-	reordered := make([]table.Row, 0, len(rows))
-	var rest []table.Row
-	for _, r := range rows {
-		if fmt.Sprintf("%v", r.Data[key]) == val {
-			reordered = append(reordered, r)
-		} else {
-			rest = append(rest, r)
-		}
-	}
-	return append(reordered, rest...)
-}
+func (m *Model) NavigateTo(key, val string) {}
 
 // SortHint implements Tab.
 func (m *Model) SortHint() string {
@@ -219,8 +167,6 @@ func (m *Model) ApplySort(key string) {
 	if !m.sort.Apply(sortEntries, key) {
 		return
 	}
-	m.navKey = ""
-	m.navVal = ""
 	rows := m.buildRows()
 	m.sort.SortRows(rows)
 	m.table = m.table.WithRows(rows)

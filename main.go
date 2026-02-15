@@ -8,6 +8,7 @@ import (
 	"github.com/jerryluo/nettui/internal/app"
 	"github.com/jerryluo/nettui/internal/data/sources"
 	"github.com/jerryluo/nettui/internal/tabs"
+	"github.com/jerryluo/nettui/internal/tabs/arp"
 	"github.com/jerryluo/nettui/internal/tabs/firewall"
 	"github.com/jerryluo/nettui/internal/tabs/interfaces"
 	"github.com/jerryluo/nettui/internal/tabs/processes"
@@ -25,6 +26,7 @@ func main() {
 		processes.New(),
 		interfaces.New(),
 		routes.New(),
+		arp.New(),
 		firewall.New(),
 	}
 

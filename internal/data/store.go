@@ -12,6 +12,7 @@ type Store struct {
 	UnixSockets []UnixSocket
 	Processes   []Process
 	Firewall    []FirewallRule
+	ARPEntries  []ARPEntry
 	Throughputs map[string]Throughput
 	Errors      []CollectionError
 	IsRoot      bool
@@ -45,6 +46,7 @@ func (s *Store) Update(result CollectionResult) {
 	s.UnixSockets = result.UnixSockets
 	s.Processes = result.Processes
 	s.Firewall = result.Firewall
+	s.ARPEntries = result.ARPEntries
 	s.Throughputs = result.Throughputs
 	s.Errors = result.Errors
 	s.IsRoot = result.IsRoot
@@ -90,6 +92,7 @@ func (s *Store) Snapshot() *Store {
 		UnixSockets:   make([]UnixSocket, len(s.UnixSockets)),
 		Processes:     make([]Process, len(s.Processes)),
 		Firewall:      make([]FirewallRule, len(s.Firewall)),
+		ARPEntries:    make([]ARPEntry, len(s.ARPEntries)),
 		Throughputs:   make(map[string]Throughput, len(s.Throughputs)),
 		Errors:        make([]CollectionError, len(s.Errors)),
 		IsRoot:        s.IsRoot,
@@ -104,6 +107,7 @@ func (s *Store) Snapshot() *Store {
 	copy(snap.UnixSockets, s.UnixSockets)
 	copy(snap.Processes, s.Processes)
 	copy(snap.Firewall, s.Firewall)
+	copy(snap.ARPEntries, s.ARPEntries)
 	copy(snap.Errors, s.Errors)
 	for k, v := range s.Throughputs {
 		snap.Throughputs[k] = v

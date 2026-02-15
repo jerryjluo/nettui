@@ -190,6 +190,10 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.updatePanelContent()
 		return m, nil
 	case key.Matches(msg, m.keys.Tab6):
+		m.activeTab = model.TabARP
+		m.updatePanelContent()
+		return m, nil
+	case key.Matches(msg, m.keys.Tab7):
 		m.activeTab = model.TabFirewall
 		m.updatePanelContent()
 		return m, nil
@@ -489,7 +493,7 @@ func (m Model) helpView() string {
 	}{
 		{"q / Ctrl+C", "Quit"},
 		{"h/l / Tab/Shift+Tab", "Prev / next tab"},
-		{"1-6", "Jump to tab"},
+		{"1-7", "Jump to tab"},
 		{"j/k / arrows", "Navigate rows"},
 		{"d/u", "Page down / up"},
 		{"/", "Filter / search"},

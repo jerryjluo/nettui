@@ -13,6 +13,7 @@ type KeyMap struct {
 	Tab4      key.Binding
 	Tab5      key.Binding
 	Tab6      key.Binding
+	Tab7      key.Binding
 	Up        key.Binding
 	Down      key.Binding
 	Filter    key.Binding
@@ -49,7 +50,8 @@ func DefaultKeyMap() KeyMap {
 		Tab3: key.NewBinding(key.WithKeys("3"), key.WithHelp("3", "Sockets")),
 		Tab4: key.NewBinding(key.WithKeys("4"), key.WithHelp("4", "Unix")),
 		Tab5: key.NewBinding(key.WithKeys("5"), key.WithHelp("5", "Processes")),
-		Tab6: key.NewBinding(key.WithKeys("6"), key.WithHelp("6", "Firewall")),
+		Tab6: key.NewBinding(key.WithKeys("6"), key.WithHelp("6", "ARP")),
+		Tab7: key.NewBinding(key.WithKeys("7"), key.WithHelp("7", "Firewall")),
 		Up: key.NewBinding(
 			key.WithKeys("k", "up"),
 			key.WithHelp("k/up", "up"),

@@ -99,6 +99,11 @@ func (c *Collector) Collect() data.CollectionResult {
 	result.Firewall = fwRules
 	result.Errors = append(result.Errors, errs...)
 
+	// ARP table.
+	arpEntries, errs := CollectARP()
+	result.ARPEntries = arpEntries
+	result.Errors = append(result.Errors, errs...)
+
 	// Trigger async DNS resolution for unique remote addresses.
 	c.triggerDNS(result.Sockets)
 

@@ -77,6 +77,16 @@ type FirewallRule struct {
 	RawRule    string
 }
 
+// ARPEntry represents an entry in the ARP table.
+type ARPEntry struct {
+	IP        string
+	MAC       string
+	Interface string
+	Hostname  string
+	Flags     string
+	Type      string // ethernet, etc.
+}
+
 // Throughput holds per-interface throughput data.
 type Throughput struct {
 	Interface string
@@ -92,6 +102,7 @@ type CollectionResult struct {
 	UnixSockets []UnixSocket
 	Processes   []Process
 	Firewall    []FirewallRule
+	ARPEntries  []ARPEntry
 	Throughputs map[string]Throughput
 	Errors      []CollectionError
 	Timestamp   time.Time
