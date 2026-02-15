@@ -157,6 +157,9 @@ func (m *Model) CrossRef() *model.CrossRefMsg {
 // NavigateTo implements Tab.
 func (m *Model) NavigateTo(key, val string) {}
 
+// NavFilterLabel implements Tab.
+func (m *Model) NavFilterLabel() string { return "" }
+
 // SortHint implements Tab.
 func (m *Model) SortHint() string {
 	return tabs.Hint(sortEntries)

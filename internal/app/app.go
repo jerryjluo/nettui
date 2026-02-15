@@ -468,6 +468,9 @@ func (m Model) View() string {
 	// Extract sort label from active tab
 	sortLabel := m.tabs[m.activeTab].SortLabel()
 
+	// Extract nav filter label from active tab
+	navFilter := m.tabs[m.activeTab].NavFilterLabel()
+
 	// Status bar
 	statusBar := ui.RenderStatusBar(ui.StatusBarState{
 		IsRoot:      m.store.IsRoot,
@@ -476,6 +479,7 @@ func (m Model) View() string {
 		ChordHint:   m.chordHint,
 		ProtoFilter: protoFilter,
 		SortLabel:   sortLabel,
+		NavFilter:   navFilter,
 	}, m.width)
 
 	return lipgloss.JoinVertical(lipgloss.Left, tabBar, content, statusBar)

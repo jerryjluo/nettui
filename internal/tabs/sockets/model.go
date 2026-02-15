@@ -194,10 +194,11 @@ func (m *Model) ProtoFilterLabel() string {
 
 func (m *Model) applyFilters() {
 	rows := m.buildRows()
+	if m.navKey != "" {
+		rows = tabs.FilterNavRows(rows, m.navKey, m.navVal)
+	}
 	if m.sort.Active() {
 		m.sort.SortRows(rows)
-	} else if m.navKey != "" {
-		rows = m.reorderRows(rows, m.navKey, m.navVal)
 	}
 	m.table = m.table.WithRows(rows)
 }
@@ -227,13 +228,7 @@ func (m *Model) View() string {
 // SetData implements Tab.
 func (m *Model) SetData(store *data.Store) {
 	m.store = store
-	rows := m.buildRows()
-	if m.sort.Active() {
-		m.sort.SortRows(rows)
-	} else if m.navKey != "" {
-		rows = m.reorderRows(rows, m.navKey, m.navVal)
-	}
-	m.table = m.table.WithRows(rows)
+	m.applyFilters()
 }
 
 // SetSize implements Tab.
@@ -291,24 +286,10 @@ func (m *Model) NavigateTo(key, val string) {
 	if key != "pid" {
 		return
 	}
-	m.sort.Clear()
 	m.navKey = key
 	m.navVal = val
-	rows := m.reorderRows(m.buildRows(), key, val)
-	m.table = m.table.WithRows(rows).WithHighlightedRow(0)
-}
-
-func (m *Model) reorderRows(rows []table.Row, key, val string) []table.Row {
-	reordered := make([]table.Row, 0, len(rows))
-	var rest []table.Row
-	for _, r := range rows {
-		if fmt.Sprintf("%v", r.Data[key]) == val {
-			reordered = append(reordered, r)
-		} else {
-			rest = append(rest, r)
-		}
-	}
-	return append(reordered, rest...)
+	m.applyFilters()
+	m.table = m.table.WithHighlightedRow(0)
 }
 
 // SortHint implements Tab.
@@ -321,8 +302,6 @@ func (m *Model) ApplySort(key string) {
 	if !m.sort.Apply(sortEntries, key) {
 		return
 	}
-	m.navKey = ""
-	m.navVal = ""
 	m.applyFilters()
 }
 
@@ -376,12 +355,28 @@ func (m *Model) IsFiltering() bool {
 
 // HasActiveFilter implements Tab.
 func (m *Model) HasActiveFilter() bool {
-	return m.table.GetCurrentFilter() != ""
+	return m.table.GetCurrentFilter() != "" || m.navKey != ""
 }
 
 // ClearFilter implements Tab.
 func (m *Model) ClearFilter() {
-	m.table = m.table.WithFilterInputValue("")
+	if m.table.GetCurrentFilter() != "" {
+		m.table = m.table.WithFilterInputValue("")
+		return
+	}
+	if m.navKey != "" {
+		m.navKey = ""
+		m.navVal = ""
+		m.applyFilters()
+	}
+}
+
+// NavFilterLabel implements Tab.
+func (m *Model) NavFilterLabel() string {
+	if m.navKey == "" {
+		return ""
+	}
+	return fmt.Sprintf("[→%s: %s]", m.navKey, m.navVal)
 }
 
 // GoToRemotePeer navigates to the socket whose local address matches
@@ -405,10 +400,11 @@ func (m *Model) GoToRemotePeer() bool {
 
 	// Build rows in current display order
 	rows := m.buildRows()
+	if m.navKey != "" {
+		rows = tabs.FilterNavRows(rows, m.navKey, m.navVal)
+	}
 	if m.sort.Active() {
 		m.sort.SortRows(rows)
-	} else if m.navKey != "" {
-		rows = m.reorderRows(rows, m.navKey, m.navVal)
 	}
 
 	// First pass: bidirectional match — peer's local matches our remote

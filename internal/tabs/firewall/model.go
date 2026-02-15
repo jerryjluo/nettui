@@ -148,9 +148,10 @@ func (m *Model) CrossRef() *model.CrossRefMsg {
 }
 
 // NavigateTo implements Tab.
-func (m *Model) NavigateTo(key, val string) {
-	// Firewall has no cross-reference navigation target.
-}
+func (m *Model) NavigateTo(key, val string) {}
+
+// NavFilterLabel implements Tab.
+func (m *Model) NavFilterLabel() string { return "" }
 
 // SortHint implements Tab.
 func (m *Model) SortHint() string {

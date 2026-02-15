@@ -57,4 +57,7 @@ type Tab interface {
 
 	// YankField returns the value for a specific yank target key, or "".
 	YankField(key string) string
+
+	// NavFilterLabel returns a display label for the active GoTo filter, or "".
+	NavFilterLabel() string
 }
