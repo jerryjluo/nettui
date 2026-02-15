@@ -30,7 +30,7 @@ var sortEntries = []tabs.SortEntry{
 	{Key: "n", ColKey: "name", SortKey: "name", Label: "Name"},
 	{Key: "m", ColKey: "command", SortKey: "command", Label: "Command"},
 	{Key: "u", ColKey: "user", SortKey: "user", Label: "User"},
-	{Key: "c", ColKey: "conns", SortKey: "conns", Label: "#Conns"},
+	{Key: "c", ColKey: "conns", SortKey: "conns", Label: "#Sockets"},
 	{Key: "x", ColKey: "unix_socks", SortKey: "unix_socks", Label: "#Unix"},
 }
 

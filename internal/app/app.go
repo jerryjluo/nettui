@@ -220,7 +220,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// On Processes tab, enter chord mode for target selection
 		if m.activeTab == model.TabProcesses {
 			m.pendingChord = 'g'
-			m.chordHint = "g→  n:Sockets  u:Unix"
+			m.chordHint = "g→  s:Sockets  u:Unix"
 			return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
 		}
 		// On Sockets tab, enter chord mode for go-to selection
@@ -339,7 +339,7 @@ func (m Model) handleGotoChord(k string) (tea.Model, tea.Cmd) {
 		}
 		var ref *model.CrossRefMsg
 		switch k {
-		case "n":
+		case "s":
 			ref = procTab.CrossRefTo(model.TabSockets)
 		case "u":
 			ref = procTab.CrossRefTo(model.TabUnixSockets)
@@ -502,7 +502,7 @@ func (m Model) helpView() string {
 		{"p", "Toggle side panel"},
 		{"Esc", "Clear filter / close panel"},
 		{"g", "Go to cross-referenced entity"},
-		{"gn/gu", "Go to Sockets/Unix (Processes tab)"},
+		{"gs/gu", "Go to Sockets/Unix (Processes tab)"},
 		{"gp/gr", "Go to Process/Remote (Sockets tab)"},
 		{"f", "Protocol filter (Sockets tab)"},
 		{"ft/fu/f4/f6/fc", "TCP/UDP/IPv4/IPv6/clear"},
