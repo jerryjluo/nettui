@@ -47,7 +47,8 @@ type Model struct {
 	transportFilter TransportFilter
 	ipVersionFilter IPVersionFilter
 
-	sort tabs.SortState
+	sort       tabs.SortState
+	panelWidth int
 }
 
 var sortEntries = []tabs.SortEntry{
@@ -57,6 +58,7 @@ var sortEntries = []tabs.SortEntry{
 	{Key: "s", ColKey: "state", SortKey: "state", Label: "State"},
 	{Key: "i", ColKey: "pid", SortKey: "raw_pid", Label: "PID"},
 	{Key: "n", ColKey: "process", SortKey: "process", Label: "Process"},
+	{Key: "m", ColKey: "command", SortKey: "command", Label: "Command"},
 }
 
 // New creates a new Sockets tab model.
@@ -88,6 +90,12 @@ func (m *Model) buildRows() []table.Row {
 		if m.dnsOn && m.dnsCache != nil && remoteAddr != "" {
 			remoteAddr = m.dnsCache.Lookup(remoteAddr)
 		}
+		command := ""
+		if m.store != nil && s.PID > 0 {
+			if proc, ok := m.store.ProcessByPID[s.PID]; ok {
+				command = proc.Command
+			}
+		}
 		rows = append(rows, table.NewRow(table.RowData{
 			"proto":           s.Proto,
 			"local":           util.FormatAddrPort(s.LocalAddr, s.LocalPort),
@@ -95,6 +103,7 @@ func (m *Model) buildRows() []table.Row {
 			"state":           s.State,
 			"pid":             util.FormatPID(s.PID),
 			"process":         util.FormatProcess(s.Process),
+			"command":         command,
 			"raw_pid":         s.PID,
 			"raw_local_addr":  s.LocalAddr,
 			"raw_local_port":  s.LocalPort,
@@ -256,7 +265,7 @@ func (m *Model) DetailContent() string {
 	if row.Data == nil {
 		return ""
 	}
-	return detailContent(row.Data)
+	return detailContent(row.Data, m.panelWidth)
 }
 
 // CrossRef implements Tab.
@@ -322,11 +331,13 @@ func (m *Model) SortLabel() string {
 }
 
 // SetPanelWidth implements Tab.
-func (m *Model) SetPanelWidth(width int) {}
+func (m *Model) SetPanelWidth(width int) {
+	m.panelWidth = width
+}
 
 // YankHint implements Tab.
 func (m *Model) YankHint() string {
-	return "y→  l:Local  r:Remote  p:PID  n:Process  y:All"
+	return "y→  l:Local  r:Remote  p:PID  n:Process  m:Command  y:All"
 }
 
 // YankField implements Tab.
@@ -347,6 +358,9 @@ func (m *Model) YankField(key string) string {
 		return v
 	case "n":
 		v, _ := row.Data["process"].(string)
+		return v
+	case "m":
+		v, _ := row.Data["command"].(string)
 		return v
 	case "y":
 		return m.SelectedRow()

@@ -204,14 +204,8 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case key.Matches(msg, m.keys.Escape):
-		// If a search filter is active, clear it first
 		if m.tabs[m.activeTab].HasActiveFilter() {
 			m.tabs[m.activeTab].ClearFilter()
-			return m, nil
-		}
-		if m.panel.Visible() {
-			m.panel.Hide()
-			m.recalcLayout()
 			return m, nil
 		}
 		return m, nil

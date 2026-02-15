@@ -10,5 +10,6 @@ func columns() []table.Column {
 		table.NewColumn("state", "State", 14),
 		table.NewColumn("pid", "PID", 8).WithFiltered(true),
 		table.NewColumn("process", "Process", 18).WithFiltered(true),
+		table.NewFlexColumn("command", "Command", 2).WithFiltered(true),
 	}
 }
