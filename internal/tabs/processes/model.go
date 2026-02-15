@@ -45,7 +45,8 @@ func New() *Model {
 		WithPageSize(20).
 		Filtered(true).
 		HeaderStyle(model.TableHeaderStyle).
-		HighlightStyle(model.SelectedRowStyle)
+		HighlightStyle(model.SelectedRowStyle).
+		WithPaginationWrapping(false)
 	return m
 }
 
@@ -76,7 +77,7 @@ func (m *Model) Init() tea.Cmd {
 // Update implements tea.Model.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	m.table, cmd = m.table.Update(msg)
+	m.table, cmd = tabs.ClampedUpdate(m.table, msg)
 	return m, cmd
 }
 

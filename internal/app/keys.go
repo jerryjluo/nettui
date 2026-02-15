@@ -91,12 +91,12 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("r", "refresh"),
 		),
 		PageUp: key.NewBinding(
-			key.WithKeys("u"),
-			key.WithHelp("u", "page up"),
+			key.WithKeys("u", "ctrl+u"),
+			key.WithHelp("u/^u", "page up"),
 		),
 		PageDown: key.NewBinding(
-			key.WithKeys("d"),
-			key.WithHelp("d", "page down"),
+			key.WithKeys("d", "ctrl+d"),
+			key.WithHelp("d/^d", "page down"),
 		),
 		ProtoFilter: key.NewBinding(
 			key.WithKeys("f"),
