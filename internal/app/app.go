@@ -227,6 +227,12 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.chordHint = "g→  p:Process  r:Remote"
 			return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
 		}
+		// On Unix Sockets tab, enter chord mode for target selection
+		if m.activeTab == model.TabUnixSockets {
+			m.pendingChord = 'g'
+			m.chordHint = "g→  p:Process"
+			return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
+		}
 		// Other tabs: immediate cross-ref
 		ref := m.tabs[m.activeTab].CrossRef()
 		if ref != nil {
@@ -360,6 +366,14 @@ func (m Model) handleGotoChord(k string) (tea.Model, tea.Cmd) {
 		case "r":
 			if sockTab.GoToRemotePeer() {
 				m.updatePanelContent()
+			}
+		}
+
+	case model.TabUnixSockets:
+		if k == "p" {
+			ref := m.tabs[model.TabUnixSockets].CrossRef()
+			if ref != nil {
+				return m.Update(*ref)
 			}
 		}
 	}
@@ -501,11 +515,12 @@ func (m Model) helpView() string {
 		{"j/k / arrows", "Navigate rows"},
 		{"d/u", "Page down / up"},
 		{"/", "Filter / search"},
-		{"p", "Toggle side panel"},
+		{"P", "Toggle side panel"},
 		{"Esc", "Clear filter / close panel"},
 		{"g", "Go to cross-referenced entity"},
 		{"gs/gu", "Go to Sockets/Unix (Processes tab)"},
 		{"gp/gr", "Go to Process/Remote (Sockets tab)"},
+		{"gp", "Go to Process (Unix Sockets tab)"},
 		{"f", "Protocol filter (Sockets tab)"},
 		{"ft/fu/f4/f6/fc", "TCP/UDP/IPv4/IPv6/clear"},
 		{"s", "Sort by column (chord)"},

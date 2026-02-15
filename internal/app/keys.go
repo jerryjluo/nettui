@@ -65,8 +65,8 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("/", "filter"),
 		),
 		Enter: key.NewBinding(
-			key.WithKeys("p"),
-			key.WithHelp("p", "detail panel"),
+			key.WithKeys("P"),
+			key.WithHelp("P", "detail panel"),
 		),
 		Escape: key.NewBinding(
 			key.WithKeys("esc"),
