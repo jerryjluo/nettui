@@ -21,6 +21,10 @@ run = "go mod tidy"
 description = "Remove build artifacts"
 run = "rm -f nettui"
 
+[tasks.install]
+description = "Build and install nettui to ~/.local/bin"
+run = "go build -o nettui . && install -d ~/.local/bin && install nettui ~/.local/bin/nettui"
+
 [tasks.lint]
 description = "Run go vet"
 run = "go vet ./..."
