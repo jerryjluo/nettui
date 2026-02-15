@@ -324,6 +324,36 @@ func (m *Model) SortLabel() string {
 // SetPanelWidth implements Tab.
 func (m *Model) SetPanelWidth(width int) {}
 
+// YankHint implements Tab.
+func (m *Model) YankHint() string {
+	return "y→  l:Local  r:Remote  p:PID  n:Process  y:All"
+}
+
+// YankField implements Tab.
+func (m *Model) YankField(key string) string {
+	row := m.table.HighlightedRow()
+	if row.Data == nil {
+		return ""
+	}
+	switch key {
+	case "l":
+		v, _ := row.Data["local"].(string)
+		return v
+	case "r":
+		v, _ := row.Data["remote"].(string)
+		return v
+	case "p":
+		v, _ := row.Data["pid"].(string)
+		return v
+	case "n":
+		v, _ := row.Data["process"].(string)
+		return v
+	case "y":
+		return m.SelectedRow()
+	}
+	return ""
+}
+
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
 	return m.table.GetIsFilterInputFocused()

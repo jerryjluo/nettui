@@ -63,6 +63,33 @@ func (m *Model) buildRows() []table.Row {
 	return rows
 }
 
+// YankHint implements Tab.
+func (m *Model) YankHint() string {
+	return "y→  d:Dest  g:Gateway  i:Iface  y:All"
+}
+
+// YankField implements Tab.
+func (m *Model) YankField(key string) string {
+	row := m.table.HighlightedRow()
+	if row.Data == nil {
+		return ""
+	}
+	switch key {
+	case "d":
+		v, _ := row.Data["dest"].(string)
+		return v
+	case "g":
+		v, _ := row.Data["gateway"].(string)
+		return v
+	case "i":
+		v, _ := row.Data["iface"].(string)
+		return v
+	case "y":
+		return m.SelectedRow()
+	}
+	return ""
+}
+
 // Init implements tea.Model.
 func (m *Model) Init() tea.Cmd {
 	return nil

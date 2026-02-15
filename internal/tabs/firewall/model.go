@@ -174,6 +174,33 @@ func (m *Model) SortLabel() string {
 // SetPanelWidth implements Tab.
 func (m *Model) SetPanelWidth(width int) {}
 
+// YankHint implements Tab.
+func (m *Model) YankHint() string {
+	return "y→  r:Rule  s:Src  d:Dst  y:All"
+}
+
+// YankField implements Tab.
+func (m *Model) YankField(key string) string {
+	row := m.table.HighlightedRow()
+	if row.Data == nil {
+		return ""
+	}
+	switch key {
+	case "r":
+		v, _ := row.Data["raw_rule"].(string)
+		return v
+	case "s":
+		v, _ := row.Data["src"].(string)
+		return v
+	case "d":
+		v, _ := row.Data["dst"].(string)
+		return v
+	case "y":
+		return m.SelectedRow()
+	}
+	return ""
+}
+
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
 	return m.table.GetIsFilterInputFocused()

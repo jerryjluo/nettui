@@ -203,6 +203,33 @@ func (m *Model) SetPanelWidth(width int) {
 	m.panelWidth = width
 }
 
+// YankHint implements Tab.
+func (m *Model) YankHint() string {
+	return "y→  p:PID  n:Name  m:Command  y:All"
+}
+
+// YankField implements Tab.
+func (m *Model) YankField(key string) string {
+	row := m.table.HighlightedRow()
+	if row.Data == nil {
+		return ""
+	}
+	switch key {
+	case "p":
+		v, _ := row.Data["pid"].(string)
+		return v
+	case "n":
+		v, _ := row.Data["name"].(string)
+		return v
+	case "m":
+		v, _ := row.Data["command"].(string)
+		return v
+	case "y":
+		return m.SelectedRow()
+	}
+	return ""
+}
+
 // IsFiltering implements Tab.
 func (m *Model) IsFiltering() bool {
 	return m.table.GetIsFilterInputFocused()

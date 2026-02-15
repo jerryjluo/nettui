@@ -251,17 +251,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case key.Matches(msg, m.keys.Copy):
-		content := m.tabs[m.activeTab].SelectedRow()
-		if content == "" {
-			return m, nil
-		}
-		return m, func() tea.Msg {
-			err := util.CopyToClipboard(content)
-			if err != nil {
-				return model.CopyResultMsg{Success: false, Error: err.Error()}
-			}
-			return model.CopyResultMsg{Success: true}
-		}
+		m.pendingChord = 'y'
+		m.chordHint = m.tabs[m.activeTab].YankHint()
+		return m, tea.Tick(2*time.Second, func(time.Time) tea.Msg { return clearChordMsg{} })
 
 	case key.Matches(msg, m.keys.Refresh):
 		return m, func() tea.Msg { return refreshMsg{} }
@@ -332,6 +324,8 @@ func (m Model) handleChordSecondKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleFilterChord(k)
 	case 's':
 		return m.handleSortChord(k)
+	case 'y':
+		return m.handleYankChord(k)
 	}
 	return m, nil
 }
@@ -393,6 +387,20 @@ func (m Model) handleFilterChord(k string) (tea.Model, tea.Cmd) {
 		sockTab.ClearProtoFilters()
 	}
 	return m, nil
+}
+
+func (m Model) handleYankChord(k string) (tea.Model, tea.Cmd) {
+	content := m.tabs[m.activeTab].YankField(k)
+	if content == "" {
+		return m, nil
+	}
+	return m, func() tea.Msg {
+		err := util.CopyToClipboard(content)
+		if err != nil {
+			return model.CopyResultMsg{Success: false, Error: err.Error()}
+		}
+		return model.CopyResultMsg{Success: true}
+	}
 }
 
 func (m Model) handleSortChord(k string) (tea.Model, tea.Cmd) {
@@ -499,7 +507,10 @@ func (m Model) helpView() string {
 		{"f", "Protocol filter (Sockets tab)"},
 		{"ft/fu/f4/f6/fc", "TCP/UDP/IPv4/IPv6/clear"},
 		{"s", "Sort by column (chord)"},
-		{"y", "Yank (copy) selection to clipboard"},
+		{"y", "Yank (copy) chord — field to clipboard"},
+		{"yl/yr", "Yank local/remote addr (Sockets)"},
+		{"yp/yn", "Yank PID/process name"},
+		{"yy", "Yank full row summary"},
 		{"r", "Refresh data"},
 		{"D", "Toggle DNS resolution"},
 		{"?", "Toggle this help"},

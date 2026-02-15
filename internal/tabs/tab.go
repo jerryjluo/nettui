@@ -51,4 +51,10 @@ type Tab interface {
 
 	// SetPanelWidth stores the detail panel width for content wrapping.
 	SetPanelWidth(width int)
+
+	// YankHint returns the chord hint for yank keys on this tab.
+	YankHint() string
+
+	// YankField returns the value for a specific yank target key, or "".
+	YankField(key string) string
 }
